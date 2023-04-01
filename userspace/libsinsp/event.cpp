@@ -2107,12 +2107,12 @@ const char* sinsp_evt::get_param_as_str(uint32_t id, OUT const char** resolved_s
 			uint32_t initial_val = val;
 			uint32_t j = 0;
 
-			while(flags != NULL && flags->name != NULL && flags->value != initial_val)
+			while(flags != NULL && flags->name != NULL)
 			{
 				// If flag is 0, then initial_val needs to be 0 for the flag to be resolved
 				if ((exact_match && flags->value == initial_val) ||
 				    ((flags->value == 0 && initial_val == 0) ||
-				    (flags->value != 0 && (val & flags->value) == flags->value && val != 0)))
+				    (!exact_match && flags->value != 0 && (val & flags->value) == flags->value && val != 0)))
 				{
 					if(m_resolved_paramstr_storage.size() < j + strlen(separator) + strlen(flags->name))
 					{
