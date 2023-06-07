@@ -120,16 +120,38 @@ libsinsp::events::set<ppm_event_code> libsinsp::events::names_to_event_set(const
 	// to eventually enable generic events too!
 	if (!remaining_events.empty())
 	{
+		bool generic_inserted = false;
 		// Secondary loop, on syscalls and remaining events
 		for(int ppm_sc = 0; ppm_sc < PPM_SC_MAX; ++ppm_sc)
 		{
 			const char* ppm_sc_name = scap_get_ppm_sc_name((ppm_sc_code)ppm_sc);
 			if(remaining_events.find(ppm_sc_name) != remaining_events.end())
 			{
-				ppm_event_set.insert(PPME_GENERIC_E);
-				ppm_event_set.insert(PPME_GENERIC_X);
-				break;
+				if(!generic_inserted)
+				{
+					ppm_event_set.insert(PPME_GENERIC_E);
+					ppm_event_set.insert(PPME_GENERIC_X);
+					generic_inserted = true;
+				}
+				remaining_events.erase(ppm_sc_name);
 			}
+		}
+		if(remaining_events.size() != 0)
+		{
+			std::ostringstream err_msg;
+			err_msg << "There are some unknown syscalls in the custom set: [";
+
+			bool first = true;
+			for (const auto& it : remaining_events) {
+				if (!first) {
+					err_msg << ",";
+				}
+				err_msg << it;
+				first = false;
+			}
+
+			err_msg << "]";
+			throw sinsp_exception(err_msg.str());
 		}
 	}
 	return ppm_event_set;
