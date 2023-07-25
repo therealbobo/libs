@@ -7058,4 +7058,56 @@ FILLER(sys_pidfd_open_x, true)
 	return bpf_push_u32_to_ring(data, pidfd_open_flags_to_scap(flags));
 
 }
+
+FILLER(sys_init_module_x, true)
+{
+
+	/* Parameter 1: ret (type: PT_ERRNO) */
+	long retval = bpf_syscall_get_retval(data->ctx);
+	int res = bpf_push_s64_to_ring(data, retval);
+	CHECK_RES(res);
+
+	/* Parameter 3: length (type: PT_UINT64) */
+	u64 len = bpf_syscall_get_argument(data, 1);
+
+	/* Parameter 2: img (type: PT_BYTEBUF) */
+	long img = bpf_syscall_get_argument(data, 0);
+	res = __bpf_val_to_ring(data, img, len, PT_BYTEBUF, -1, true, USER);
+
+	/* Parameter 3: length (type: PT_UINT64) */
+	res = bpf_val_to_ring(data, len);
+
+	/* Parameter 4: uargs (type: PT_CHARBUF) */
+	long uargs = bpf_syscall_get_argument(data, 2);
+	res = bpf_val_to_ring(data, uargs);
+
+	return res;
+
+}
+
+FILLER(sys_finit_module_x, true)
+{
+
+	/* Parameter 1: ret (type: PT_ERRNO) */
+	long retval = bpf_syscall_get_retval(data->ctx);
+	int res = bpf_push_s64_to_ring(data, retval);
+	CHECK_RES(res);
+
+	/* Parameter 2: fd (type: PT_FD) */
+	s64 fd = bpf_syscall_get_argument(data, 0);
+	res = bpf_push_s64_to_ring(data, fd);
+	CHECK_RES(res);
+
+	/* Parameter 3: uargs (type: PT_CHARBUF) */
+	long uargs = bpf_syscall_get_argument(data, 1);
+	res = bpf_val_to_ring(data, uargs);
+
+	/* Parameter 4: flags (type: PT_INT32) */
+	s32 flags = bpf_syscall_get_argument(data, 2);
+	res = bpf_val_to_ring(data, finit_module_flags_to_scap(flags));
+
+	return res;
+
+}
+
 #endif
