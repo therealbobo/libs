@@ -6,8 +6,13 @@
 #include <poll.h>
 #include <sys/types.h>
 #include <sys/sem.h>
+#if !defined(__EMSCRIPTEN__)
 #include <sys/quota.h>
 #include <sys/ptrace.h>
+#if !defined(__APPLE__)
+#include <sys/prctl.h>
+#endif
+#endif
 #include <sys/resource.h>
 #include <sys/file.h>
 #include <sys/prctl.h>

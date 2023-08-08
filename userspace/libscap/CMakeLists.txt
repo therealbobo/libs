@@ -163,11 +163,12 @@ add_subdirectory(engine/noop)
 # don't link the noop engine to libscap directly,
 # it's a helper library for other engines (it's completely useless on its own)
 
-if(CMAKE_SYSTEM_NAME MATCHES "Linux")
-	add_definitions(-DHAS_ENGINE_NODRIVER)
-	add_subdirectory(engine/nodriver)
-	target_link_libraries(scap scap_engine_nodriver)
-endif()
+#TODO(therealbobo): remove comments
+#if(CMAKE_SYSTEM_NAME MATCHES "Linux" OR APPLE)
+add_definitions(-DHAS_ENGINE_NODRIVER)
+add_subdirectory(engine/nodriver)
+target_link_libraries(scap scap_engine_nodriver)
+#endif()
 
 add_definitions(-DHAS_ENGINE_SAVEFILE)
 add_subdirectory(engine/savefile)
