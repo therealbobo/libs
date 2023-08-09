@@ -312,7 +312,7 @@ endif()
 
 option(CREATE_TEST_TARGETS "Enable make-targets for unit testing" ON)
 
-if(CREATE_TEST_TARGETS AND NOT WIN32)
+if(CREATE_TEST_TARGETS)
 		# Add unit test directories
 		add_subdirectory(test)
 endif()

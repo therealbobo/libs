@@ -108,7 +108,9 @@ endif()
 
 option(CREATE_TEST_TARGETS "Enable make-targets for unit testing" ON)
 
-if(CREATE_TEST_TARGETS AND NOT WIN32)
+# TODO(therealbobo): remove comment
+#if(CREATE_TEST_TARGETS AND NOT WIN32)
+if(CREATE_TEST_TARGETS)
 	# Add engine only used for testing
 	add_definitions(-DHAS_ENGINE_TEST_INPUT)
 	add_subdirectory(engine/test_input)

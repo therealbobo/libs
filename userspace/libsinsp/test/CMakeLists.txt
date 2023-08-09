@@ -20,6 +20,17 @@ if(NOT MINIMAL_BUILD)
 	include(curl)
 endif() # MINIMAL_BUILD
 
+if(NOT MINIMAL_BUILD)
+	include(zlib)
+endif()
+
+if(WIN32)
+	set(CMAKE_CXX_FLAGS "-D_CRT_SECURE_NO_WARNINGS -DWIN32 -DMINIMAL_BUILD /EHsc /W3 /Zi /std:c++20")
+	set(CMAKE_CXX_FLAGS_DEBUG "/MTd /Od")
+	set(CMAKE_CXX_STANDARD 20)
+endif()
+
+
 include_directories("..")
 include_directories(${LIBSCAP_INCLUDE_DIR} ${LIBSCAP_DIR}/driver)
 
@@ -28,39 +39,113 @@ file(GLOB_RECURSE PUBLIC_SINSP_API_SUITE ${CMAKE_CURRENT_SOURCE_DIR}/public_sins
 
 file(GLOB_RECURSE TEST_PLUGINS ${CMAKE_CURRENT_SOURCE_DIR}/plugins/*.cpp)
 
-set(LIBSINSP_UNIT_TESTS_SOURCES
-	test_utils.cpp
-	async_key_value_source.ut.cpp
-	cgroup_list_counter.ut.cpp
-	events_evt.ut.cpp
-	events_file.ut.cpp
-	events_fspath.ut.cpp
-	events_net.ut.cpp
-	events_param.ut.cpp
-	events_plugin.ut.cpp
-	events_proc.ut.cpp
-	events_user.ut.cpp
-	external_processor.ut.cpp
-	token_bucket.ut.cpp
-	ppm_api_version.ut.cpp
-	plugins.ut.cpp
-	plugin_manager.ut.cpp
-	prefix_search.ut.cpp
-	string_visitor.ut.cpp
-	filter_escaping.ut.cpp
-	filter_parser.ut.cpp
-	filter_op_bcontains.ut.cpp
-	filter_op_pmatch.ut.cpp
-	filter_compiler.ut.cpp
-	filter_ppm_codes.ut.cpp
-	user.ut.cpp
-	container_info.ut.cpp
-	sinsp_utils.ut.cpp
-	state.ut.cpp
-	eventformatter.ut.cpp
-	"${PUBLIC_SINSP_API_SUITE}"
-	"${TEST_PLUGINS}"
-)
+add_definitions(-DRESOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/resources")
+
+file(GLOB_RECURSE SINSP_PARSERS_SUITE ${CMAKE_CURRENT_SOURCE_DIR}/parsers/*.cpp)
+
+file(GLOB_RECURSE SINSP_CLASSES_SUITE ${CMAKE_CURRENT_SOURCE_DIR}/classes/*.cpp)
+
+file(GLOB_RECURSE SINSP_FILTERCHECKS_SUITE ${CMAKE_CURRENT_SOURCE_DIR}/filterchecks/*.cpp)
+
+# Scap-files on Big Endian systems are not supported
+if(NOT ${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "s390x")
+	# Binary dir in which we will save all our Cmake files
+	file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/scap_files")
+	# Add here the name for new scap-files
+	set(SCAP_FILE_NAMES
+	    "kexec_arm64.scap"
+		"kexec_x86.scap"
+	)
+	set(SCAP_FILE_DOWNLOAD_PREFIX
+		"https://download.falco.org/fixtures/libs/scap_files"
+	)
+	message(STATUS "Download all scap-files from: ${SCAP_FILE_DOWNLOAD_PREFIX}")
+	foreach(FILE_NAME ${SCAP_FILE_NAMES})
+		message(STATUS "Downloading scap-file: ${SCAP_FILE_DOWNLOAD_PREFIX}/${FILE_NAME}")
+		if(NOT EXISTS "${CMAKE_BINARY_DIR}/scap_files/${FILE_NAME}")
+			file(DOWNLOAD
+			"${SCAP_FILE_DOWNLOAD_PREFIX}/${FILE_NAME}"
+			"${CMAKE_BINARY_DIR}/scap_files/${FILE_NAME}"
+			SHOW_PROGRESS)
+		else()
+			message(STATUS "Skipping download, file already present")
+		endif()
+	endforeach()
+	file(GLOB_RECURSE SCAP_FILES_SUITE ${CMAKE_CURRENT_SOURCE_DIR}/scap_files/*.cpp)
+endif()
+
+file(GLOB_RECURSE TEST_HELPERS ${CMAKE_CURRENT_SOURCE_DIR}/helpers/*.cpp)
+
+if(WIN32)
+	set(LIBSINSP_UNIT_TESTS_SOURCES
+		test_utils.cpp
+		cgroup_list_counter.ut.cpp
+		events_evt.ut.cpp
+		events_param.ut.cpp
+		events_plugin.ut.cpp
+		external_processor.ut.cpp
+		token_bucket.ut.cpp
+		ppm_api_version.ut.cpp
+		plugins.ut.cpp
+		plugin_manager.ut.cpp
+		prefix_search.ut.cpp
+		string_visitor.ut.cpp
+		filter_escaping.ut.cpp
+		filter_parser.ut.cpp
+		filter_op_bcontains.ut.cpp
+		filter_op_pmatch.ut.cpp
+		filter_compiler.ut.cpp
+		container_info.ut.cpp
+		sinsp_utils.ut.cpp
+		#state.ut.cpp
+		eventformatter.ut.cpp
+		savefile.ut.cpp
+		public_sinsp_API/event_related.cpp
+		"${TEST_PLUGINS}"
+		"${SCAP_FILES_SUITE}"
+		"${TEST_HELPERS}"
+	)
+else()
+	set(LIBSINSP_UNIT_TESTS_SOURCES
+		test_utils.cpp
+		cgroup_list_counter.ut.cpp
+		events_evt.ut.cpp
+		events_file.ut.cpp
+		events_fspath.ut.cpp
+		events_net.ut.cpp
+		events_param.ut.cpp
+		events_plugin.ut.cpp
+		events_proc.ut.cpp
+		events_user.ut.cpp
+		external_processor.ut.cpp
+		token_bucket.ut.cpp
+		ppm_api_version.ut.cpp
+		plugins.ut.cpp
+		plugin_manager.ut.cpp
+		prefix_search.ut.cpp
+		string_visitor.ut.cpp
+		filter_escaping.ut.cpp
+		filter_parser.ut.cpp
+		filter_op_bcontains.ut.cpp
+		filter_op_pmatch.ut.cpp
+		filter_compiler.ut.cpp
+		user.ut.cpp
+		container_info.ut.cpp
+		sinsp_utils.ut.cpp
+		state.ut.cpp
+		eventformatter.ut.cpp
+		savefile.ut.cpp
+		thread_table.ut.cpp
+		public_sinsp_API/event_related.cpp
+		public_sinsp_API/sinsp_logger.cpp
+		"${TEST_PLUGINS}"
+		"${SINSP_PARSERS_SUITE}"
+		"${SINSP_CLASSES_SUITE}"
+		"${SINSP_FILTERCHECKS_SUITE}"
+		"${SCAP_FILES_SUITE}"
+		"${TEST_HELPERS}"
+	)
+endif()
 
 if(NOT MINIMAL_BUILD)
 	list(APPEND LIBSINSP_UNIT_TESTS_SOURCES procfs_utils.ut.cpp)
