@@ -104,6 +104,7 @@ TEST(plugins, broken_capabilities)
 // scenario: a plugin with field extraction capability compatible with the
 // "syscall" event source should be able to extract filter values from
 // regular syscall events produced by any scap engine.
+#ifndef _WIN32
 TEST_F(sinsp_with_test_input, plugin_syscall_extract)
 {
 	size_t syscall_source_idx = 0;
@@ -179,10 +180,12 @@ TEST_F(sinsp_with_test_input, plugin_syscall_extract)
 	ASSERT_FALSE(field_exists(evt, "sample.evt_count", pl_flist));
 	ASSERT_FALSE(field_exists(evt, "sample.tick", pl_flist));
 }
+#endif
 
 // scenario: an event sourcing plugin should produce events of "syscall"
 // event source and we should be able to extract filter values implemented
 // by both libsinsp and another plugin with field extraction capability
+#ifndef _WIN32
 TEST_F(sinsp_with_test_input, plugin_syscall_source)
 {
 	size_t syscall_source_idx = 0;
@@ -218,6 +221,7 @@ TEST_F(sinsp_with_test_input, plugin_syscall_source)
 		evt = next_event();
 	}
 }
+#endif
 
 // scenario: a plugin with field extraction capability compatible with the
 // event source of another plugin should extract values from its events
