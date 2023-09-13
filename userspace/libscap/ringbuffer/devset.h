@@ -26,6 +26,7 @@ limitations under the License.
 #define INVALID_MAPPING MAP_FAILED
 
 #include "scap_assert.h"
+#include "scap.h" // for scap_stats
 
 //
 // Read buffer timeout constants
@@ -37,6 +38,14 @@ limitations under the License.
 struct ppm_ring_buffer_info;
 struct udig_ring_buffer_status;
 
+enum scap_device_state
+{
+	DEV_CLOSED = 0,
+	DEV_OPEN,
+	DEV_OPENING,
+	DEV_CLOSING,
+};
+
 //
 // The device descriptor
 //
@@ -44,7 +53,7 @@ typedef struct scap_device
 {
 	int m_fd;
 	int m_bufinfo_fd; // used by udig
-	char* m_buffer;
+	char *m_buffer;
 	unsigned long m_buffer_size;
 	unsigned long m_mmap_size; // generally 2 * m_buffer_size, but bpf does weird things
 	uint32_t m_lastreadsize;
@@ -58,19 +67,26 @@ typedef struct scap_device
 			struct ppm_ring_buffer_info* m_bufinfo;
 			int m_bufinfo_size;
 			struct udig_ring_buffer_status* m_bufstatus; // used by udig
+			enum scap_device_state m_state;
 		};
 	};
 } scap_device;
 
 struct scap_device_set
 {
-	scap_device* m_devs;
-	uint32_t m_ndevs;
+	scap_device *m_devs;
+	uint32_t m_alloc_devs; // number of devs allocated
+	uint32_t m_used_devs;  // number of devs actually used (if not fixed)
+	uint32_t m_ndevs;      // index of last used dev + 1
 	uint64_t m_buffer_empty_wait_time_us;
-	char* m_lasterr;
+	char *m_lasterr;
+	struct scap_stats old_stats;
 };
 
 int32_t devset_init(struct scap_device_set *devset, size_t num_devs, char *lasterr);
+
+int32_t devset_grow(struct scap_device_set *devset, size_t num_devs, char *lasterr);
+
 void devset_close_device(struct scap_device *dev);
 void devset_free(struct scap_device_set *devset);
 

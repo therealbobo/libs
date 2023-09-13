@@ -134,6 +134,11 @@ static inline bool are_buffers_empty(struct scap_device_set *devset)
 
 	for(j = 0; j < devset->m_ndevs; j++)
 	{
+		if(devset->m_devs[j].m_state != DEV_OPEN)
+		{
+			continue;
+		}
+
 		if(buf_size_used(&devset->m_devs[j]) > BUFFER_EMPTY_THRESHOLD_B)
 		{
 			return false;
@@ -163,6 +168,10 @@ static inline int32_t refill_read_buffers(struct scap_device_set *devset)
 	for(j = 0; j < ndevs; j++)
 	{
 		struct scap_device *dev = &(devset->m_devs[j]);
+		if(dev->m_state != DEV_OPEN)
+		{
+			continue;
+		}
 
 		int32_t res = READBUF(dev,
 				      &dev->m_sn_next_event,
@@ -222,6 +231,11 @@ static inline int32_t ringbuffer_next(struct scap_device_set *devset, OUT scap_e
 	for(j = 0; j < ndevs; j++)
 	{
 		scap_device* dev = &(devset->m_devs[j]);
+
+		if(dev->m_state != DEV_OPEN)
+		{
+			continue;
+		}
 
 		/* `dev->m_sn_len` and `dev->m_lastreadsize` initially contain the dimension
 		 * of the full buffer block we have read in `refill_read_buffers`.
