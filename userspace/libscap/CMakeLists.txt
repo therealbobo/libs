@@ -22,6 +22,7 @@ option(BUILD_LIBSCAP_MODERN_BPF "Enable modern bpf probe" OFF)
 include(ExternalProject)
 
 include(zlib)
+include_directories("${ZLIB_INCLUDE}")
 
 add_definitions(-DPLATFORM_NAME="${CMAKE_SYSTEM_NAME}")
 

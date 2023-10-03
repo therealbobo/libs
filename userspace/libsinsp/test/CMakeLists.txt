@@ -22,9 +22,9 @@ if(NOT MINIMAL_BUILD AND NOT EMSCRIPTEN)
 	include(curl)
 endif() # MINIMAL_BUILD
 
-if(NOT MINIMAL_BUILD)
+#if(NOT MINIMAL_BUILD)
 	include(zlib)
-endif()
+#endif()
 
 if(WIN32)
 	set(CMAKE_CXX_FLAGS "-D_CRT_SECURE_NO_WARNINGS -DWIN32 -DMINIMAL_BUILD /EHsc /W3 /Zi /std:c++17")
@@ -169,6 +169,7 @@ endif()
 target_link_libraries(unit-test-libsinsp
 	"${GTEST_LIB}"
 	"${GTEST_MAIN_LIB}"
+	"${JSONCPP_LIB}"
 	sinsp
 )
 
