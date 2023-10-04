@@ -60,6 +60,9 @@ else()
 				PREFIX "${PROJECT_BINARY_DIR}/zlib-prefix"
 				URL "https://github.com/madler/zlib/archive/v1.2.13.tar.gz"
 				URL_HASH "SHA256=1525952a0a567581792613a9723333d7f8cc20b87a81f920fb8bc7e3f2251428"
+				CMAKE_ARGS
+				-DCMAKE_CXX_FLAGS_DEBUG="/MTd /Od"
+				-DCMAKE_CXX_FLAGS_RELEASE="/MT"
 				CONFIGURE_COMMAND ""
 				BUILD_COMMAND nmake -f win32/Makefile.msc
 				BUILD_IN_SOURCE 1
