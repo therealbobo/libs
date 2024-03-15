@@ -34,10 +34,11 @@ configure_file (
 add_executable(libsinsp_e2e_tests
     container/container.cpp
     container/container_cgroup.cpp
+    container/container_cri.cpp
     container/docker_utils.cpp
     event_capture.cpp
     main.cpp
-	paths.cpp
+    paths.cpp
     subprocess.cpp
     sys_call_test.cpp
     thread_state.cpp
@@ -93,3 +94,5 @@ file(COPY
     DESTINATION
     ${CMAKE_CURRENT_BINARY_DIR}/resources/
 )
+
+add_subdirectory(fake_cri)
