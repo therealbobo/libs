@@ -38,8 +38,10 @@ add_executable(libsinsp_e2e_tests
     event_capture.cpp
     main.cpp
 	paths.cpp
+	process.cpp
     subprocess.cpp
     sys_call_test.cpp
+    threadinfo.cpp
     thread_state.cpp
 )
 

@@ -113,6 +113,7 @@ void event_capture::capture()
 	{
 		if (SCAP_SUCCESS == (next_result = get_inspector()->next(&event)))
 		{
+			dumper->dump(event);
 			result = handle_event(event);
 		}
 		if (!signaled_start)
