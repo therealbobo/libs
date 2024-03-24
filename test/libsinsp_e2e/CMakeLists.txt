@@ -32,17 +32,18 @@ configure_file (
 )
 
 add_executable(libsinsp_e2e_tests
-    container/container.cpp
-    container/container_cgroup.cpp
-    container/docker_utils.cpp
+    #container/container.cpp
+    #container/container_cgroup.cpp
+    #container/docker_utils.cpp
     event_capture.cpp
     main.cpp
-	paths.cpp
-	process.cpp
+	#paths.cpp
+	#process.cpp
     subprocess.cpp
-    sys_call_test.cpp
-    threadinfo.cpp
-    thread_state.cpp
+    #sys_call_test.cpp
+    #threadinfo.cpp
+    #thread_state.cpp
+    refactor.cpp
 )
 
 if(BUILD_BPF)

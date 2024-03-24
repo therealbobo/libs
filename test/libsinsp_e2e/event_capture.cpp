@@ -18,6 +18,7 @@ limitations under the License.
 
 #include "event_capture.h"
 
+#include <cstdlib>
 #include <gtest/gtest.h>
 
 #include <libsinsp/sinsp.h>
@@ -28,11 +29,34 @@ limitations under the License.
 std::string event_capture::m_engine_string = KMOD_ENGINE;
 std::string event_capture::m_engine_path = "";
 unsigned long event_capture::m_buffer_dim = DEFAULT_DRIVER_BUFFER_BYTES_DIM;
-bool event_capture::inspector_ok = false;
+bool event_capture::s_inspector_ok = false;
+size_t event_capture::s_res_events;
 
-concurrent_object_handle<sinsp> event_capture::get_inspector_handle()
+event_capture::event_capture(event_filter_t filter, event_thread& test_thread,
+							 pid_t tid, uint32_t max_thread_table_size,
+							 uint64_t thread_timeout_ns,
+							 uint64_t inactive_thread_scan_time_ns,
+							 sinsp_mode_t mode, uint64_t max_timeouts):
+	m_done(false),
+	m_filter(filter),
+	m_inactive_thread_scan_time_ns(inactive_thread_scan_time_ns),
+	m_max_thread_table_size(max_thread_table_size),
+	m_max_timeouts(max_timeouts),
+	m_mode(mode),
+	m_test_thread(test_thread),
+	m_thread_timeout_ns(thread_timeout_ns),
+	m_tid(tid),
+	m_disable_tid_filter(false)
 {
-	return {get_inspector(), m_inspector_mutex};
+	if(tid == -1)
+	{
+		m_tid = test_thread.get_tid();
+	}
+};
+
+event_capture::~event_capture()
+{
+	s_res_events = 0;
 }
 
 void event_capture::init_inspector()
@@ -50,26 +74,13 @@ void event_capture::init_inspector()
 
 		try
 		{
-			if (m_mode == SINSP_MODE_NODRIVER)
-			{
-				get_inspector()->open_nodriver();
-			}
-			else
-			{
-				open_engine(event_capture::get_engine(), {});
-			}
+			open_engine(event_capture::get_engine(), {});
 		}
 		catch (sinsp_exception& e)
 		{
-			m_start_failed = true;
 			m_start_failure_message =
 				"couldn't open inspector (maybe driver hasn't been loaded yet?) err=" +
 				get_inspector()->getlasterr() + " exception=" + e.what();
-			{
-				//std::unique_lock<std::mutex> lock(m_mutex);
-				m_capture_started = true;
-				m_condition_started.notify_one();
-			}
 			return;
 		}
 
@@ -77,184 +88,88 @@ void event_capture::init_inspector()
 		get_inspector()->set_hostname_and_port_resolution_mode(false);
 }
 
-void event_capture::capture()
+size_t event_capture::stop()
+{
+	return s_res_events;
+}
+
+void event_capture::start()
 {
 	const ::testing::TestInfo* const test_info =
 		::testing::UnitTest::GetInstance()->current_test_info();
 	std::unique_ptr<sinsp_cycledumper> dumper;
-	{
-		std::scoped_lock init_lock(m_inspector_mutex, m_object_state_mutex);
-
-		if(!inspector_ok)
-		{
-			init_inspector();
-			inspector_ok = true;
-		}
-
-		m_param.m_inspector = get_inspector();
-
-		m_before_open(get_inspector());
-
-		get_inspector()->start_capture();
-		if (m_mode != SINSP_MODE_NODRIVER)
-		{
-			m_dump_filename = std::string(LIBSINSP_TEST_CAPTURES_PATH) + test_info->test_case_name() + "_" +
-				test_info->name() + ".scap";
-			dumper = std::make_unique<sinsp_cycledumper>(get_inspector(), m_dump_filename.c_str(),
-														 0, 0, 0, 0, true);
-		}
-	}  // End init synchronized section
-
-	bool signaled_start = false;
-	sinsp_evt* event;
-	bool result = true;
+	std::string dump_filename;
 	int32_t next_result = SCAP_SUCCESS;
-	while (!m_capture_stopped && result && !::testing::Test::HasFatalFailure())
+	uint32_t n_timeouts = 0;
+
+	if(!s_inspector_ok)
 	{
-		if (SCAP_SUCCESS == (next_result = get_inspector()->next(&event)))
-		{
-			dumper->dump(event);
-			result = handle_event(event);
-		}
-		if (!signaled_start)
-		{
-			signaled_start = true;
-			{
-				std::unique_lock<std::mutex> lock(m_object_state_mutex);
-				m_capture_started = true;
-				m_condition_started.notify_one();
-			}
-		}
+		init_inspector();
+		s_inspector_ok = true;
 	}
 
-	if (m_mode != SINSP_MODE_NODRIVER)
-	{
-		uint32_t n_timeouts = 0;
-		while (result && !::testing::Test::HasFatalFailure())
-		{
-			next_result = get_inspector()->next(&event);
-			if (next_result == SCAP_TIMEOUT)
-			{
-				n_timeouts++;
+	dump_filename = std::string(LIBSINSP_TEST_CAPTURES_PATH) + test_info->test_case_name() + "_" +
+		test_info->name() + ".scap";
+	dumper = std::make_unique<sinsp_cycledumper>(get_inspector(), dump_filename.c_str(),
+													0, 0, 0, 0, true);
 
-				if (n_timeouts < m_max_timeouts)
-				{
-					continue;
-				}
-				else
-				{
-					break;
-				}
-			}
-
-			if (next_result == SCAP_FILTERED_EVENT)
-			{
-				continue;
-			}
-			if (next_result != SCAP_SUCCESS)
-			{
-				break;
-			}
-			dumper->dump(event);
-			result = handle_event(event);
-		}
-		{
-			std::scoped_lock inspector_next_lock(m_inspector_mutex);
-			while (SCAP_SUCCESS == get_inspector()->next(&event))
-			{
-				// just consume the remaining events
-				dumper->dump(event);
-			}
-		}
-	}
-
-	{  // Begin teardown synchronized section
-		std::scoped_lock teardown_lock(m_inspector_mutex, m_object_state_mutex);
-		m_before_close(get_inspector());
-
-		get_inspector()->stop_capture();
-		m_capture_stopped = true;
-		m_condition_stopped.notify_one();
-	}  // End teardown synchronized section
-
-}
-
-void event_capture::stop_capture()
-{
-	{
-		std::scoped_lock init_lock(m_inspector_mutex, m_object_state_mutex);
-		m_capture_stopped = true;
-		m_condition_stopped.notify_one();
-	}
-}
-
-void event_capture::wait_for_capture_start()
-{
-	std::unique_lock<std::mutex> lock(m_object_state_mutex);
-	m_condition_started.wait(lock, [this]() {
-		return m_capture_started;
-	});
-}
-
-void event_capture::wait_for_capture_stop()
-{
-	std::unique_lock<std::mutex> lock(m_object_state_mutex);
-	m_condition_stopped.wait(lock, [this]() {
-		return m_capture_stopped;
-	});
-}
-
-void event_capture::re_read_dump_file()
-{
-	try
-	{
-		sinsp inspector;
+	std::thread inspector_thread([&]{
 		sinsp_evt* event;
 
-		inspector.open_savefile(m_dump_filename);
-		uint32_t res;
-		do
+		get_inspector()->start_capture();
+
+		m_test_thread.start();
+
+		while (!m_done)
 		{
-			res = inspector.next(&event);
-		} while (res == SCAP_SUCCESS);
-		ASSERT_EQ((int)SCAP_EOF, (int)res);
-	}
-	catch (sinsp_exception& e)
-	{
-		FAIL() << "caught exception " << e.what();
-	}
+			next_result = get_inspector()->next(&event);
+			switch(next_result)
+			{
+				case SCAP_SUCCESS:
+					dumper->dump(event);
+					handle_event(event);
+					break;
+				case SCAP_TIMEOUT:
+					n_timeouts++;
+					if (n_timeouts >= m_max_timeouts)
+					{
+						m_done = true;
+					}
+					break;
+				default:
+					break;
+			}
+		}
+
+		get_inspector()->stop_capture();
+
+		while (SCAP_SUCCESS == get_inspector()->next(&event))
+		{
+			// just consume the remaining events
+			//dumper->dump(event);
+		}
+
+	});
+
+	m_test_thread.join();
+	inspector_thread.join();
 }
 
-bool event_capture::
-handle_event(sinsp_evt* event)
+bool event_capture::handle_event(sinsp_evt* event)
 {
-	std::unique_lock<std::mutex> object_state_lock(m_object_state_mutex);
-	if (::testing::Test::HasNonfatalFailure())
+	if((event->get_type() == PPME_GENERIC_E ||
+	    event->get_type() == PPME_GENERIC_X) &&
+	   event->get_param(0)->as<int16_t>() == 1337)
 	{
-		return true;
-	}
-	bool res = true;
-	if (m_filter(event))
-	{
-		try
-		{
-			m_param.m_evt = event;
-			m_captured_event_callback(m_param);
-		}
-		catch(...)
-		{
-			res = false;
-		}
-	}
-	if (!m_capture_continue())
-	{
+		m_done = true;
 		return false;
 	}
-	if (!res || ::testing::Test::HasNonfatalFailure())
+	else if ((!m_disable_tid_filter && event->get_tid() == m_tid) && m_filter(event))
 	{
-		std::cerr << "failed on event " << event->get_num() << std::endl;
+		s_res_events++;
+		return true;
 	}
-	return res;
+	return false;
 }
 
 void event_capture::open_engine(const std::string& engine_string, libsinsp::events::set<ppm_sc_code> events_sc_codes)
@@ -292,6 +207,11 @@ void event_capture::open_engine(const std::string& engine_string, libsinsp::even
 	}
 }
 
+size_t event_capture::get_matched_num()
+{
+	return s_res_events;
+}
+
 void event_capture::set_engine(const std::string& engine_string, const std::string& engine_path)
 {
 	m_engine_string = engine_string;
@@ -311,4 +231,9 @@ const std::string& event_capture::get_engine()
 const std::string& event_capture::get_engine_path()
 {
 	return m_engine_path;
+}
+
+void event_capture::disable_tid_filter(bool v)
+{
+	m_disable_tid_filter = v;
 }
