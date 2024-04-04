@@ -9,9 +9,9 @@
 class event_thread
 {
 public:
-	event_thread(std::function<void()> func):
+        event_thread(std::function<void()> func):
         m_abort(false),
-		m_tid(-1)
+        m_tid(-1)
     {
         std::promise<void> tid_starter;
         thread = std::thread([this, func, &tid_starter]() mutable {

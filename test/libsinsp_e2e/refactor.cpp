@@ -87,7 +87,8 @@ TEST_F(sys_call_test, open_close)
 
 	event_filter_t filter = [&](sinsp_evt* evt)
 	{
-		return (0 == strcmp(evt->get_name(), "open") || 0 == strcmp(evt->get_name(), "openat") ||
+		return (0 == strcmp(evt->get_name(), "open") ||
+				0 == strcmp(evt->get_name(), "openat") ||
 		        0 == strcmp(evt->get_name(), "close")) && "<f>/tmp" == evt->get_param_value_str("fd");
 
 	};
@@ -462,7 +463,6 @@ TEST_F(sys_call_test, DISABLED_timestamp)
 
 	auto res = capture.stop();
 
-	printf("Res %d\n", res);
 	EXPECT_EQ((int)(sizeof(timestampv) / sizeof(timestampv[0])), res);
 }
 
@@ -948,7 +948,6 @@ TEST_F(sys_call_test, getsetuid_and_gid)
 TEST_F(sys_call_test32, execve_ia32_emulation)
 {
 	event_thread test([]{
-		printf("AAAA\n");
 		auto ret = system(LIBSINSP_TEST_RESOURCES_PATH "execve32 "
 						  LIBSINSP_TEST_RESOURCES_PATH "execve "
 						  LIBSINSP_TEST_RESOURCES_PATH "execve32");
@@ -956,58 +955,63 @@ TEST_F(sys_call_test32, execve_ia32_emulation)
 	});
 
 	sinsp_filter_compiler compiler(event_capture::get_inspector(),
-						"evt.type=execve and proc.apid=" + std::to_string(test.get_tid()));
+						"evt.type=execve and proc.apid=" + std::to_string(::gettid()));
 	std::unique_ptr<sinsp_filter> is_subprocess_execve = compiler.compile();
 
 	event_filter_t filter = [&](sinsp_evt* evt)
 	{
-		uint16_t type = evt->get_type();
-		auto tinfo = evt->get_thread_info(true);
-		if (type == PPME_SYSCALL_EXECVE_19_E || type == PPME_SYSCALL_EXECVE_18_E ||
-		    type == PPME_SYSCALL_EXECVE_17_E)
+		if(is_subprocess_execve->run(evt))
 		{
-			switch (event_capture::get_matched_num())
+			uint16_t type = evt->get_type();
+			auto tinfo = evt->get_thread_info(true);
+			if (type == PPME_SYSCALL_EXECVE_19_E || type == PPME_SYSCALL_EXECVE_18_E ||
+				type == PPME_SYSCALL_EXECVE_17_E)
 			{
-			case 0:
-				EXPECT_EQ(tinfo->m_comm, "libsinsp_e2e_te");
-				break;
-			case 2:
-				EXPECT_EQ(tinfo->m_comm, "sh");
-				break;
-			case 4:
-				EXPECT_EQ(tinfo->m_comm, "execve32");
-				break;
-			case 6:
-				EXPECT_EQ(tinfo->m_comm, "execve");
-				break;
-			default:
-				return false;
+				switch (event_capture::get_matched_num())
+				{
+					case 0:
+						EXPECT_EQ(tinfo->m_comm, "libsinsp_e2e_te");
+						break;
+					case 2:
+						EXPECT_EQ(tinfo->m_comm, "sh");
+						break;
+					case 4:
+						EXPECT_EQ(tinfo->m_comm, "execve32");
+						break;
+					case 6:
+						EXPECT_EQ(tinfo->m_comm, "execve");
+						break;
+					default:
+						return false;
+				}
+				return true;
 			}
-		}
-		else if (type == PPME_SYSCALL_EXECVE_19_X || type == PPME_SYSCALL_EXECVE_18_X ||
-		         type == PPME_SYSCALL_EXECVE_17_X)
-		{
-			EXPECT_EQ("0", evt->get_param_value_str("res", false));
-			auto comm = evt->get_param_value_str("comm", false);
-			switch (event_capture::get_matched_num())
+			else if (type == PPME_SYSCALL_EXECVE_19_X || type == PPME_SYSCALL_EXECVE_18_X ||
+					 type == PPME_SYSCALL_EXECVE_17_X)
 			{
-			case 1:
-				EXPECT_EQ(comm, "sh");
-				break;
-			case 3:
-				EXPECT_EQ(comm, "execve32");
-				break;
-			case 5:
-				EXPECT_EQ(comm, "execve");
-				break;
-			case 7:
-				EXPECT_EQ(comm, "execve32");
-				break;
-			default:
-				return false;
+				EXPECT_EQ("0", evt->get_param_value_str("res", false));
+				auto comm = evt->get_param_value_str("comm", false);
+				switch (event_capture::get_matched_num())
+				{
+					case 1:
+						EXPECT_EQ(comm, "sh");
+						break;
+					case 3:
+						EXPECT_EQ(comm, "execve32");
+						break;
+					case 5:
+						EXPECT_EQ(comm, "execve");
+						break;
+					case 7:
+						EXPECT_EQ(comm, "execve32");
+						break;
+					default:
+						return false;
+				}
 			}
+			return true;
 		}
-		return is_subprocess_execve->run(evt);
+		return false;
 	};
 
 	event_capture capture(filter, test);

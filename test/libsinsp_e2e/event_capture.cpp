@@ -116,6 +116,8 @@ void event_capture::start()
 	std::thread inspector_thread([&]{
 		sinsp_evt* event;
 
+		get_inspector()->refresh_proc_list();
+		get_inspector()->m_thread_manager->create_thread_dependencies_after_proc_scan();
 		get_inspector()->start_capture();
 
 		m_test_thread.start();
@@ -164,11 +166,20 @@ bool event_capture::handle_event(sinsp_evt* event)
 		m_done = true;
 		return false;
 	}
-	else if ((!m_disable_tid_filter && event->get_tid() == m_tid) && m_filter(event))
+	else if (!m_disable_tid_filter)
+	{
+		if (event->get_tid() == m_tid && m_filter(event))
+		{
+			s_res_events++;
+			return true;
+		}
+	}
+	else if (m_filter(event))
 	{
 		s_res_events++;
 		return true;
 	}
+
 	return false;
 }
 
