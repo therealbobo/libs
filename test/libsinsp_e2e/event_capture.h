@@ -56,6 +56,7 @@ public:
 	void start();
 	size_t stop();
 	void disable_tid_filter(bool v);
+	void use_subprocess(bool v);
 
 	static size_t get_matched_num();
 	static void set_engine(const std::string& engine_string, const std::string& engine_path);
@@ -68,12 +69,15 @@ public:
 
 private:
 
+	bool filter(sinsp_evt* event);
 	bool handle_event(sinsp_evt* event);
 
 	void open_engine(const std::string& engine_string, libsinsp::events::set<ppm_sc_code> events_sc_codes);
 
 	std::atomic<bool> m_done;
 	event_filter_t m_filter;
+	std::unique_ptr<sinsp_filter> m_subprocess_filter;
+	bool m_use_subprocess;
 	uint64_t m_inactive_thread_scan_time_ns;
 	uint32_t m_max_thread_table_size;
 	uint64_t m_max_timeouts;

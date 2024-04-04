@@ -39,6 +39,7 @@ event_capture::event_capture(event_filter_t filter, event_thread& test_thread,
 							 sinsp_mode_t mode, uint64_t max_timeouts):
 	m_done(false),
 	m_filter(filter),
+	m_use_subprocess(false),
 	m_inactive_thread_scan_time_ns(inactive_thread_scan_time_ns),
 	m_max_thread_table_size(max_thread_table_size),
 	m_max_timeouts(max_timeouts),
@@ -157,6 +158,28 @@ void event_capture::start()
 	inspector_thread.join();
 }
 
+bool event_capture::filter(sinsp_evt* event)
+{
+	if(m_use_subprocess)
+	{
+		if (!m_disable_tid_filter)
+		{
+			return (event->get_tid() == m_tid || m_subprocess_filter->run(event))
+				&& m_filter(event);
+		}
+		return m_subprocess_filter->run(event) && m_filter(event);
+	}
+	else
+	{
+		if (!m_disable_tid_filter)
+		{
+			return event->get_tid() == m_tid && m_filter(event);
+		}
+		return m_filter(event);
+	}
+	return false;
+}
+
 bool event_capture::handle_event(sinsp_evt* event)
 {
 	if((event->get_type() == PPME_GENERIC_E ||
@@ -166,15 +189,7 @@ bool event_capture::handle_event(sinsp_evt* event)
 		m_done = true;
 		return false;
 	}
-	else if (!m_disable_tid_filter)
-	{
-		if (event->get_tid() == m_tid && m_filter(event))
-		{
-			s_res_events++;
-			return true;
-		}
-	}
-	else if (m_filter(event))
+	else if(filter(event))
 	{
 		s_res_events++;
 		return true;
@@ -247,4 +262,15 @@ const std::string& event_capture::get_engine_path()
 void event_capture::disable_tid_filter(bool v)
 {
 	m_disable_tid_filter = v;
+}
+
+void event_capture::use_subprocess(bool v)
+{
+	m_use_subprocess = v;
+	if(v)
+	{
+		sinsp_filter_compiler compiler(get_inspector(),
+					"proc.apid=" + std::to_string(getpid()));
+		m_subprocess_filter = compiler.compile();
+	}
 }

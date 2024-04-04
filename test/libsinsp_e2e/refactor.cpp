@@ -866,84 +866,100 @@ TEST_F(sys_call_test, quotactl_ok)
 	EXPECT_EQ(8, res);
 }
 
-/*
 TEST_F(sys_call_test, getsetuid_and_gid)
 {
-	static const uint32_t test_gid = 6566;
-	int callnum = 0;
-
-	event_filter_t filter = [&](sinsp_evt* evt) { return m_tid_filter(evt); };
-
-	run_callback_t test = [&](concurrent_object_handle<sinsp> inspector_handle)
+	event_filter_t filter = [&](sinsp_evt* e)
 	{
-		auto res = setuid(0);
-		EXPECT_EQ(0, res);
-		res = setgid(test_gid);
-		EXPECT_EQ(0, res);
-		getuid();
-		geteuid();
-		getgid();
-		getegid();
-	};
-
-	captured_event_callback_t callback = [&](const callback_param& param)
-	{
-		sinsp_evt* e = param.m_evt;
 		uint16_t type = e->get_type();
 		switch (type)
 		{
 		case PPME_SYSCALL_SETUID_E:
-			++callnum;
 			EXPECT_EQ("0", e->get_param_value_str("uid", false));
 			EXPECT_EQ("root", e->get_param_value_str("uid"));
+			return true;
 			break;
 		case PPME_SYSCALL_SETUID_X:
-			++callnum;
 			EXPECT_EQ("0", e->get_param_value_str("res", false));
+			return true;
 			break;
 		case PPME_SYSCALL_SETGID_E:
-			++callnum;
 			EXPECT_EQ("6566", e->get_param_value_str("gid", false));
 			EXPECT_EQ("<NA>", e->get_param_value_str("gid"));
+			return true;
 			break;
 		case PPME_SYSCALL_SETGID_X:
-			++callnum;
 			EXPECT_EQ("0", e->get_param_value_str("res", false));
+			return true;
 			break;
 		case PPME_SYSCALL_GETUID_X:
-			++callnum;
 			EXPECT_EQ("0", e->get_param_value_str("uid", false));
 			EXPECT_EQ("root", e->get_param_value_str("uid"));
+			return true;
 			break;
 		case PPME_SYSCALL_GETEUID_X:
-			++callnum;
 			EXPECT_EQ("0", e->get_param_value_str("euid", false));
 			EXPECT_EQ("root", e->get_param_value_str("euid"));
+			return true;
 			break;
 		case PPME_SYSCALL_GETGID_X:
-			++callnum;
 			EXPECT_EQ("6566", e->get_param_value_str("gid", false));
 			EXPECT_EQ("<NA>", e->get_param_value_str("gid"));
+			return true;
 			break;
 		case PPME_SYSCALL_GETEGID_X:
-			++callnum;
 			EXPECT_EQ("6566", e->get_param_value_str("egid", false));
 			EXPECT_EQ("<NA>", e->get_param_value_str("egid"));
+			return true;
 			break;
 		case PPME_SYSCALL_GETUID_E:
 		case PPME_SYSCALL_GETEUID_E:
 		case PPME_SYSCALL_GETGID_E:
 		case PPME_SYSCALL_GETEGID_E:
-			++callnum;
+			return true;
 			break;
+		default:
+			return false;
 		}
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
-	EXPECT_EQ(12, callnum);
+
+	uint32_t orig_uid  = getuid();
+	uint32_t orig_euid = geteuid();
+	uint32_t orig_gid  = getgid();
+	uint32_t orig_egid = getegid();
+
+	event_thread test([]{
+		auto res = setuid(0);
+		EXPECT_EQ(0, res);
+		res = setgid(6566);
+		EXPECT_EQ(0, res);
+		getuid();
+		geteuid();
+		getgid();
+		getegid();
+	});
+
+
+	event_capture capture(filter, test);
+
+	capture.start();
+
+	auto res = capture.stop();
+
+	int result = 0;
+	result += setuid(orig_uid);
+	result += seteuid(orig_euid);
+	result += setgid(orig_gid);
+	result += setegid(orig_egid);
+
+	if(result != 0)
+	{
+		FAIL() << "Cannot restore initial id state.";
+	}
+
+	EXPECT_EQ(12, res);
 }
 
 #ifdef __x86_64__
-*/
 
 TEST_F(sys_call_test32, execve_ia32_emulation)
 {
@@ -1025,83 +1041,81 @@ TEST_F(sys_call_test32, execve_ia32_emulation)
 	EXPECT_EQ(8, res);
 }
 
-/*
 TEST_F(sys_call_test32, quotactl_ko)
 {
-	int callnum = 0;
-
-	event_filter_t filter = [&](sinsp_evt* evt)
-	{
-		return evt->get_type() == PPME_SYSCALL_QUOTACTL_X ||
-		       evt->get_type() == PPME_SYSCALL_QUOTACTL_E;
-	};
-
-	run_callback_t test = [&](concurrent_object_handle<sinsp> inspector_handle)
-	{
+	event_thread test([]{
 		subprocess handle(LIBSINSP_TEST_PATH "/test_helper_32", {"quotactl_ko"});
 		handle.wait();
-	};
+	});
 
-	captured_event_callback_t callback = [&](const callback_param& param)
+	event_filter_t filter = [&](sinsp_evt* e)
 	{
-		sinsp_evt* e = param.m_evt;
 		uint16_t type = e->get_type();
 		if (type == PPME_SYSCALL_QUOTACTL_E)
 		{
-			++callnum;
-			switch (callnum)
+			switch (event_capture::get_matched_num())
 			{
-			case 1:
+			case 0:
 				EXPECT_EQ("Q_QUOTAON", e->get_param_value_str("cmd"));
 				EXPECT_EQ("USRQUOTA", e->get_param_value_str("type"));
 				EXPECT_EQ("QFMT_VFS_V0", e->get_param_value_str("quota_fmt"));
 				break;
-			case 3:
+			case 2:
 				EXPECT_EQ("Q_QUOTAOFF", e->get_param_value_str("cmd"));
 				EXPECT_EQ("GRPQUOTA", e->get_param_value_str("type"));
+				break;
+			default:
+				return false;
 			}
+			return true;
 		}
 		else if (type == PPME_SYSCALL_QUOTACTL_X)
 		{
-			++callnum;
-			switch (callnum)
+			switch (event_capture::get_matched_num())
 			{
-			case 2:
+			case 1:
 				EXPECT_EQ("-2", e->get_param_value_str("res", false));
 				EXPECT_EQ("/dev/xxx", e->get_param_value_str("special"));
 				EXPECT_EQ("/quota.user", e->get_param_value_str("quotafilepath"));
 				break;
-			case 4:
+			case 3:
 				EXPECT_EQ("-2", e->get_param_value_str("res", false));
 				EXPECT_EQ("/dev/xxx", e->get_param_value_str("special"));
+				break;
+			default:
+				return false;
 			}
+			return true;
 		}
+		return false;
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
-	EXPECT_EQ(4, callnum);
+
+	event_capture capture(filter, test);
+
+	capture.disable_tid_filter(true);
+
+	capture.use_subprocess(true);
+
+	capture.start();
+
+	auto res = capture.stop();
+
+	EXPECT_EQ(4, res);
 }
 
 #endif
 
 TEST_F(sys_call_test, setns_test)
 {
-	int callnum = 0;
-	int fd;
-	event_filter_t filter = [&](sinsp_evt* evt)
-	{
-		return m_tid_filter(evt) &&
-		       (evt->get_type() == PPME_SYSCALL_SETNS_E || evt->get_type() == PPME_SYSCALL_SETNS_X);
-	};
-	run_callback_t test = [&](concurrent_object_handle<sinsp> inspector_handle)
-	{
-		fd = open("/proc/self/ns/net", O_RDONLY);
+	event_thread test([]{
+		int fd = open("/proc/self/ns/net", O_RDONLY);
 		ASSERT_NE(0, fd);
 		ASSERT_EQ(0, setns(fd, CLONE_NEWNET));
 		ASSERT_EQ(0, close(fd));
-	};
-	captured_event_callback_t callback = [&](const callback_param& param)
+	});
+
+	event_filter_t filter = [&](sinsp_evt* e)
 	{
-		sinsp_evt* e = param.m_evt;
 		uint16_t type = e->get_type();
 		switch (type)
 		{
@@ -1111,24 +1125,24 @@ TEST_F(sys_call_test, setns_test)
 		case PPME_SYSCALL_SETNS_X:
 			EXPECT_EQ("0", e->get_param_value_str("res"));
 			break;
+		default:
+			return false;
 		}
-		++callnum;
+		return true;
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
-	EXPECT_EQ(2, callnum);
+
+	event_capture capture(filter, test);
+
+	capture.start();
+
+	auto res = capture.stop();
+
+	EXPECT_EQ(2, res);
 }
 
 TEST_F(sys_call_test, unshare_)
 {
-	int callnum = 0;
-	event_filter_t filter = [&](sinsp_evt* evt)
-	{
-		auto tinfo = evt->get_thread_info(true);
-		return tinfo->get_comm() == "libsinsp_e2e_te" && (evt->get_type() == PPME_SYSCALL_UNSHARE_E ||
-		                                        evt->get_type() == PPME_SYSCALL_UNSHARE_X);
-	};
-	run_callback_t test = [&](concurrent_object_handle<sinsp> inspector_handle)
-	{
+	event_thread test([]{
 		auto child = fork();
 		if (child == 0)
 		{
@@ -1137,10 +1151,10 @@ TEST_F(sys_call_test, unshare_)
 			_exit(0);
 		}
 		waitpid(child, NULL, 0);
-	};
-	captured_event_callback_t callback = [&](const callback_param& param)
+	});
+
+	event_filter_t filter = [&](sinsp_evt* e)
 	{
-		sinsp_evt* e = param.m_evt;
 		uint16_t type = e->get_type();
 		switch (type)
 		{
@@ -1150,23 +1164,28 @@ TEST_F(sys_call_test, unshare_)
 		case PPME_SYSCALL_UNSHARE_X:
 			EXPECT_EQ("0", e->get_param_value_str("res"));
 			break;
+		default:
+			return false;
 		}
-		++callnum;
+		return true;
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
-	EXPECT_EQ(2, callnum);
+
+	event_capture capture(filter, test);
+
+	capture.disable_tid_filter(true);
+
+	capture.use_subprocess(true);
+
+	capture.start();
+
+	auto res = capture.stop();
+
+	EXPECT_EQ(2, res);
 }
 
 TEST_F(sys_call_test, sendmsg_recvmsg_SCM_RIGHTS)
 {
-	int callnum = 0;
-	event_filter_t filter = [&](sinsp_evt* evt)
-	{
-		auto tinfo = evt->get_thread_info(true);
-		return tinfo->get_comm() == "libsinsp_e2e_te" && evt->get_type() == PPME_SOCKET_RECVMSG_X;
-	};
-	run_callback_t test = [&](concurrent_object_handle<sinsp> inspector_handle)
-	{
+	event_thread test([]{
 		int server_sd, worker_sd, pair_sd[2];
 		int rc = socketpair(AF_UNIX, SOCK_DGRAM, 0, pair_sd);
 		ASSERT_GE(rc, 0);
@@ -1229,11 +1248,11 @@ TEST_F(sys_call_test, sendmsg_recvmsg_SCM_RIGHTS)
 			waitpid(child, NULL, 0);
 			fclose(f);
 		}
-	};
-	captured_event_callback_t callback = [&](const callback_param& param)
+	});
+
+	event_filter_t filter = [&](sinsp_evt* e)
 	{
-		sinsp_evt* e = param.m_evt;
-		if (e->get_num_params() >= 5)
+		if(e->get_type() == PPME_SOCKET_RECVMSG_X && e->get_num_params() >= 5)
 		{
 			auto parinfo = e->get_param(4);
 			if(parinfo->m_len > sizeof(cmsghdr))
@@ -1242,13 +1261,19 @@ TEST_F(sys_call_test, sendmsg_recvmsg_SCM_RIGHTS)
 				memcpy(&cmsg, parinfo->m_val, sizeof(cmsghdr));
 				if(cmsg.cmsg_type == SCM_RIGHTS)
 				{
-					++callnum;
+					return true;
 				}
 			}
 		}
+		return false;
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
-	EXPECT_EQ(1, callnum);
-}
+	event_capture capture(filter, test);
 
-*/
+	capture.disable_tid_filter(true);
+
+	capture.start();
+
+	auto res = capture.stop();
+
+	EXPECT_EQ(1, res);
+}
