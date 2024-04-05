@@ -1250,6 +1250,7 @@ TEST_F(sys_call_test, sendmsg_recvmsg_SCM_RIGHTS)
 		}
 	});
 
+
 	event_filter_t filter = [&](sinsp_evt* e)
 	{
 		if(e->get_type() == PPME_SOCKET_RECVMSG_X && e->get_num_params() >= 5)
@@ -1277,3 +1278,436 @@ TEST_F(sys_call_test, sendmsg_recvmsg_SCM_RIGHTS)
 
 	EXPECT_EQ(1, res);
 }
+
+TEST_F(sys_call_test, ppoll_timeout)
+{
+	event_thread test([]{
+		subprocess handle(LIBSINSP_TEST_PATH "/test_helper", {"ppoll_timeout"});
+		handle.wait();
+	});
+
+	event_filter_t filter = [&](sinsp_evt* e)
+	{
+		uint16_t type = e->get_type();
+		if (type == PPME_SYSCALL_PPOLL_E)
+		{
+			//
+			// stdin and stdout can be a file or a fifo depending
+			// on how the tests are invoked
+			//
+			std::string fds = e->get_param_value_str("fds");
+			EXPECT_TRUE(fds == "3:p1 4:p4" || fds == "4:p1 5:p4");
+			EXPECT_EQ("1000000", e->get_param_value_str("timeout", false));
+			EXPECT_EQ("SIGHUP SIGCHLD", e->get_param_value_str("sigmask", false));
+			return true;
+		}
+		else if (type == PPME_SYSCALL_PPOLL_X)
+		{
+			int64_t res = stoi(e->get_param_value_str("res"));
+
+			EXPECT_EQ(res, 1);
+
+			std::string fds = e->get_param_value_str("fds");
+
+			EXPECT_TRUE(fds == "3:p0 4:p4" || fds == "4:p0 5:p4");
+
+			return true;
+		}
+		return false;
+	};
+
+	event_capture capture(filter, test);
+
+	capture.disable_tid_filter(true);
+
+	capture.use_subprocess(true);
+
+	capture.start();
+
+	auto res = capture.stop();
+
+	EXPECT_EQ(2, res);
+}
+
+TEST_F(sys_call_test, poll_timeout)
+{
+	int my_pipe[2];
+	event_thread test([&] {
+ 	auto ret = pipe(my_pipe);
+	ASSERT_EQ(0, ret);
+
+ 	struct pollfd ufds[2];
+ 	ufds[0].fd = my_pipe[0];
+ 	ufds[0].events = POLLIN;
+ 	ufds[1].fd = my_pipe[1];
+ 	ufds[1].events = POLLOUT;
+
+#if defined(__x86_64__)
+	syscall(SYS_poll, ufds, 2, 20);
+#else
+	poll(ufds, 2, 20);
+#endif
+	});
+
+	event_filter_t filter = [&](sinsp_evt* e)
+	{
+		uint16_t type = e->get_type();
+		std::string fds;
+
+		if (type == PPME_SYSCALL_POLL_E || type == PPME_SYSCALL_PPOLL_E)
+		{
+			std::string expected_fds = std::to_string(my_pipe[0]) + ":"
+				+ "p1 " + std::to_string(my_pipe[1]) + ":p4";
+			fds = e->get_param_value_str("fds");
+			//
+			// stdin and stdout can be a file or a fifo depending
+			// on how the tests are invoked
+			//
+			EXPECT_TRUE(fds == expected_fds)
+				<< "Value of fds is not one of expected values: " << fds;
+			EXPECT_TRUE(e->get_param_value_str("timeout") == "20" ||
+						e->get_param_value_str("timeout") == "0.02s");
+			return true;
+		}
+		else if (type == PPME_SYSCALL_POLL_X || type == PPME_SYSCALL_PPOLL_X)
+		{
+			fds = e->get_param_value_str("fds");
+			std::string expected_fds = std::to_string(my_pipe[0]) + ":"
+				+ "p0 " + std::to_string(my_pipe[1]) + ":p4";
+			int64_t res = stoi(e->get_param_value_str("res"));
+
+			EXPECT_EQ(res, 1);
+
+			EXPECT_TRUE(fds == expected_fds)
+				<< "Value of fds is not one of expected values: " << fds;
+
+			return true;
+		}
+		return false;
+	};
+
+	event_capture capture(filter, test);
+
+	capture.start();
+
+	auto res = capture.stop();
+
+	EXPECT_EQ(2, res);
+}
+
+TEST_F(sys_call_test, getsetresuid_and_gid)
+{
+	bool setresuid_e_ok = false;
+	bool setresgid_e_ok = false;
+
+	bool getresuid_e_ok = false;
+	bool getresgid_e_ok = false;
+
+	bool getresuid_ok = false;
+	bool getresgid_ok = false;
+
+	bool setresuid_ok = false;
+	bool setresgid_ok = false;
+
+	static const uint32_t test_uid = 5454;
+	static const uint32_t test_gid = 6565;
+	uint32_t uids[3];
+	uint32_t gids[3];
+
+
+	event_thread test([&]{
+		auto res = setresuid(test_uid, -1, -1);
+		EXPECT_EQ(0, res);
+		res = setresgid(test_gid, -1, -1);
+		EXPECT_EQ(0, res);
+		getresuid(uids, uids + 1, uids + 2);
+		getresgid(gids, gids + 1, gids + 2);
+	});
+
+	event_filter_t filter = [&](sinsp_evt* e)
+	{
+		uint16_t type = e->get_type();
+		if (type == PPME_SYSCALL_SETRESUID_E && e->get_param_value_str("ruid", false) != "-1" && !setresuid_e_ok)
+		{
+			std::cout << e->get_name() << std::endl;
+			EXPECT_EQ("5454", e->get_param_value_str("ruid", false));
+			EXPECT_EQ("testsetresuid", e->get_param_value_str("ruid"));
+			EXPECT_EQ("-1", e->get_param_value_str("euid", false));
+			EXPECT_EQ("<NONE>", e->get_param_value_str("euid"));
+			EXPECT_EQ("-1", e->get_param_value_str("suid", false));
+			EXPECT_EQ("<NONE>", e->get_param_value_str("suid"));
+			setresuid_e_ok = true;
+			return true;
+		}
+		else if (type == PPME_SYSCALL_SETRESUID_X && !setresuid_ok)
+		{
+			std::cout << e->get_name() << std::endl;
+			EXPECT_EQ("0", e->get_param_value_str("res", false));
+			setresuid_ok = true;
+			return true;
+		}
+		else if (type == PPME_SYSCALL_SETRESGID_E && e->get_param_value_str("rgid", false) != "-1" && !setresgid_e_ok)
+		{
+			std::cout << e->get_name() << std::endl;
+			EXPECT_EQ("6565", e->get_param_value_str("rgid", false));
+			EXPECT_EQ("testsetresgid", e->get_param_value_str("rgid"));
+			EXPECT_EQ("-1", e->get_param_value_str("egid", false));
+			EXPECT_EQ("<NONE>", e->get_param_value_str("egid"));
+			EXPECT_EQ("-1", e->get_param_value_str("sgid", false));
+			EXPECT_EQ("<NONE>", e->get_param_value_str("sgid"));
+			setresgid_e_ok = true;
+			return true;
+		}
+		else if (type == PPME_SYSCALL_SETRESGID_X && !setresgid_ok)
+		{
+			std::cout << e->get_name() << std::endl;
+			EXPECT_EQ("0", e->get_param_value_str("res", false));
+			setresgid_ok = true;
+			return true;
+		}
+		else if (type == PPME_SYSCALL_GETRESUID_E && !getresuid_e_ok)
+		{
+			std::cout << e->get_name() << std::endl;
+			getresuid_e_ok = true;
+			return true;
+		}
+		else if (type == PPME_SYSCALL_GETRESGID_E && !getresgid_e_ok)
+		{
+			std::cout << e->get_name() << std::endl;
+			getresgid_e_ok = true;
+			return true;
+		}
+		else if (type == PPME_SYSCALL_GETRESUID_X && !getresuid_ok)
+		{
+			std::cout << e->get_name() << std::endl;
+			EXPECT_EQ("0", e->get_param_value_str("res", false));
+			EXPECT_EQ("5454", e->get_param_value_str("ruid", false));
+			EXPECT_EQ("testsetresuid", e->get_param_value_str("ruid"));
+			EXPECT_EQ("0", e->get_param_value_str("euid", false));
+			EXPECT_EQ("root", e->get_param_value_str("euid"));
+			EXPECT_EQ("0", e->get_param_value_str("suid", false));
+			EXPECT_EQ("root", e->get_param_value_str("suid"));
+			getresuid_ok = true;
+			return true;
+		}
+		else if (type == PPME_SYSCALL_GETRESGID_X && !getresgid_ok)
+		{
+			std::cout << e->get_name() << std::endl;
+			EXPECT_EQ("0", e->get_param_value_str("res", false));
+			EXPECT_EQ("6565", e->get_param_value_str("rgid", false));
+			EXPECT_EQ("testsetresgid", e->get_param_value_str("rgid"));
+			EXPECT_EQ("0", e->get_param_value_str("egid", false));
+			EXPECT_EQ("root", e->get_param_value_str("egid"));
+			EXPECT_EQ("0", e->get_param_value_str("sgid", false));
+			EXPECT_EQ("root", e->get_param_value_str("sgid"));
+			getresgid_ok = true;
+			return true;
+		}
+		return false;
+	};
+
+	uint32_t orig_uids[3];
+	uint32_t orig_gids[3];
+
+	getresuid(&orig_uids[0], &orig_uids[1], &orig_uids[2]);
+	getresgid(&orig_gids[0], &orig_gids[1], &orig_gids[2]);
+
+	// Clean environment
+	int ret = system("userdel testsetresuid");
+	ret = system("groupdel testsetresgid");
+	ASSERT_EQ(0, ret);
+
+	char command[] = "useradd -u 5454 testsetresuid && "
+		"groupadd -g 6565 testsetresgid && "
+		"sudo -u testsetresuid echo -n && "
+		"sudo -g testsetresgid echo -n";
+	ret = system(command);
+	ASSERT_EQ(0, ret);
+
+	event_capture capture(filter, test);
+
+	//capture.disable_tid_filter(true);
+	//capture.use_subprocess(true);
+
+	capture.start();
+
+	auto res = capture.stop();
+
+	EXPECT_EQ(8, res);
+
+	int result = 0;
+
+	result += setresuid(orig_uids[0], orig_uids[1], orig_uids[2]);
+	result += setresgid(orig_gids[0], orig_gids[1], orig_gids[2]);
+
+	if(result != 0)
+	{
+		FAIL() << "Cannot restore initial id state.";
+	}
+}
+
+/*
+TEST_F(sys_call_test, failing_execve)
+{
+	int callnum = 0;
+
+	event_filter_t filter = [&](sinsp_evt* evt) { return m_tid_filter(evt); };
+
+	const char* eargv[] = {"/non/existent", "arg0", "arg1", "", "arg3", NULL};
+
+	const char* eenvp[] = {"env0", "env1", "", "env3", NULL};
+
+	//
+	// Touch the memory so it won't generate a PF in the driver
+	//
+	printf("%s %s %s %s %s\n", eargv[0], eargv[1], eargv[2], eargv[3], eargv[4]);
+	printf("%s %s %s %s\n", eenvp[0], eenvp[1], eenvp[2], eenvp[3]);
+
+	run_callback_t test = [&](concurrent_object_handle<sinsp> inspector)
+	{
+		int ret = execve(eargv[0], (char* const*)eargv, (char* const*)eenvp);
+		ASSERT_TRUE(ret < 0);
+	};
+
+	captured_event_callback_t callback = [&](const callback_param& param)
+	{
+		sinsp_evt* e = param.m_evt;
+		uint16_t type = e->get_type();
+
+		if (type == PPME_SYSCALL_EXECVE_19_E || type == PPME_SYSCALL_EXECVE_18_E)
+		{
+			++callnum;
+
+			string filename = e->get_param_value_str("filename");
+			EXPECT_EQ(filename, eargv[0]);
+		}
+		else if (type == PPME_SYSCALL_EXECVE_19_X || type == PPME_SYSCALL_EXECVE_18_X)
+		{
+			++callnum;
+
+			string res = e->get_param_value_str("res");
+			EXPECT_EQ(res, "ENOENT");
+
+			string exe = e->get_param_value_str("exe");
+			EXPECT_EQ(exe, eargv[0]);
+
+			string args = e->get_param_value_str("args");
+			EXPECT_EQ(args, "arg0.arg1..arg3.");
+
+			string env = e->get_param_value_str("env");
+			EXPECT_EQ(env, "env0.env1..env3.");
+		}
+	};
+
+	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	EXPECT_EQ(2, callnum);
+}
+
+#ifdef __x86_64__
+
+TEST_F(sys_call_test32, failing_execve)
+{
+	int callnum = 0;
+
+	// INIT FILTER
+	std::unique_ptr<sinsp_filter> is_subprocess_execve;
+	before_open_t before_open = [&](sinsp* inspector)
+	{
+		sinsp_filter_compiler compiler(inspector,
+		                               "evt.type=execve and proc.apid=" + std::to_string(getpid()));
+		is_subprocess_execve.reset(compiler.compile().release());
+	};
+
+	//
+	// FILTER
+	//
+	event_filter_t filter = [&](sinsp_evt* evt) { return is_subprocess_execve->run(evt); };
+
+	//
+	// TEST CODE
+	//
+	run_callback_t test = [&](concurrent_object_handle<sinsp> inspector)
+	{
+		auto ret = system(LIBSINSP_TEST_RESOURCES_PATH "execve32_fail");
+		ASSERT_TRUE(ret > 0);
+		ret = system(LIBSINSP_TEST_RESOURCES_PATH "execve32 ./fail");
+		ASSERT_TRUE(ret > 0);
+	};
+
+	//
+	// OUTPUT VALIDATION
+	//
+	captured_event_callback_t callback = [&](const callback_param& param)
+	{
+		sinsp_evt* e = param.m_evt;
+		uint16_t type = e->get_type();
+		auto tinfo = e->get_thread_info(true);
+		if (type == PPME_SYSCALL_EXECVE_19_E || type == PPME_SYSCALL_EXECVE_18_E ||
+		    type == PPME_SYSCALL_EXECVE_17_E)
+		{
+			++callnum;
+			switch (callnum)
+			{
+			case 1:
+				EXPECT_EQ(tinfo->m_comm, "libsinsp_e2e_te");
+				break;
+			case 3:
+				EXPECT_EQ(tinfo->m_comm, "sh");
+				break;
+			case 5:
+				EXPECT_EQ(tinfo->m_comm, "libsinsp_e2e_te");
+				break;
+			case 7:
+				EXPECT_EQ(tinfo->m_comm, "sh");
+				break;
+			case 9:
+				EXPECT_EQ(tinfo->m_comm, "execve32");
+				break;
+			default:
+				FAIL() << "Wrong execve entry callnum (" << callnum << ")";
+			}
+		}
+		else if (type == PPME_SYSCALL_EXECVE_19_X || type == PPME_SYSCALL_EXECVE_18_X ||
+		         type == PPME_SYSCALL_EXECVE_17_X)
+		{
+			++callnum;
+
+			auto res = e->get_param_value_str("res", false);
+			auto comm = e->get_param_value_str("comm", false);
+			auto exe = e->get_param_value_str("exe", false);
+			switch (callnum)
+			{
+			case 2:
+				EXPECT_EQ("0", res);
+				EXPECT_EQ(comm, "sh");
+				break;
+			case 4:
+				EXPECT_EQ("-2", res);
+				EXPECT_EQ(comm, "sh");
+				EXPECT_EQ(exe, LIBSINSP_TEST_RESOURCES_PATH "execve32_fail");
+				break;
+			case 6:
+				EXPECT_EQ("0", res);
+				EXPECT_EQ(comm, "sh");
+				break;
+			case 8:
+				EXPECT_EQ("0", res);
+				EXPECT_EQ(comm, "execve32");
+				EXPECT_EQ(exe, LIBSINSP_TEST_RESOURCES_PATH "execve32");
+				break;
+			case 10:
+				EXPECT_EQ("-2", res);
+				EXPECT_EQ(comm, "execve32");
+				EXPECT_EQ(exe, "./fail");
+				break;
+			default:
+				FAIL() << "Wrong execve exit callnum (" << callnum << ")";
+			}
+		}
+	};
+	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter, before_open); });
+	EXPECT_EQ(10, callnum);
+}
+
+#endif
+*/
