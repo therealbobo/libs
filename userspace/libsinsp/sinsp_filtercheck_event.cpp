@@ -16,10 +16,10 @@ limitations under the License.
 
 */
 
+#include <libsinsp/consts.h>
 #include <libsinsp/sinsp_filtercheck_event.h>
 #include <libsinsp/parsers.h>
 #include <libsinsp/plugin_manager.h>
-#include <libsinsp/sinsp.h>
 #include <libsinsp/value_parser.h>
 
 using namespace std;

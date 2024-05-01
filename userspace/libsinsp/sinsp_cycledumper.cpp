@@ -16,6 +16,7 @@ limitations under the License.
 
 */
 
+#include <libsinsp/consts.h>
 #include <libsinsp/sinsp_cycledumper.h>
 
 sinsp_cycledumper::sinsp_cycledumper(sinsp* inspector, const std::string& base_filename,

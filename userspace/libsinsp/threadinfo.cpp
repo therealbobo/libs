@@ -24,7 +24,6 @@ limitations under the License.
 #include <fstream>
 #include <libscap/strl.h>
 #include <libsinsp/parsers.h>
-#include <libsinsp/sinsp.h>
 #include <libscap/scap-int.h>
 
 constexpr static const char* s_thread_table_name = "threads";

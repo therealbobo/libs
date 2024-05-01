@@ -20,9 +20,10 @@ limitations under the License.
 
 #include <libsinsp/cri.h>
 
+#include <libsinsp/consts.h>
 #include <libsinsp/grpc_channel_registry.h>
-#include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
+#include <libsinsp/sinsp_inet.h>
+#include <libsinsp/utils.h>
 
 #include <chrono>
 

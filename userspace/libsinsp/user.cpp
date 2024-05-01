@@ -16,6 +16,7 @@ limitations under the License.
 
 */
 
+#include <libsinsp/consts.h>
 #include <libsinsp/user.h>
 #include <libsinsp/event.h>
 #include <libsinsp/logger.h>

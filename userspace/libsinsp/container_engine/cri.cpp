@@ -34,6 +34,8 @@ limitations under the License.
 #include <libsinsp/sinsp.h>
 #include <libsinsp/sinsp_int.h>
 
+#include <json/json.h>
+
 using namespace std;
 using namespace libsinsp::cri;
 using namespace libsinsp::container_engine;

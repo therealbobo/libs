@@ -18,8 +18,6 @@ limitations under the License.
 
 #include <cstdint>
 
-#include <libsinsp/sinsp.h>
-
 #include <libsinsp/filter_check_list.h>
 #include <libsinsp/filterchecks.h>
 

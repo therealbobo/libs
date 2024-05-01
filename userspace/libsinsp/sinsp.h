@@ -46,6 +46,7 @@ limitations under the License.
 
 #include <libsinsp/capture_stats_source.h>
 #include <libsinsp/container.h>
+#include <libsinsp/consts.h>
 #include <libsinsp/dumper.h>
 #include <libsinsp/event.h>
 #include <libsinsp/fdinfo.h>
@@ -83,8 +84,6 @@ limitations under the License.
 #include <string>
 #include <unordered_set>
 #include <vector>
-
-#define ONE_SECOND_IN_NS 1000000000LL
 
 class sinsp_parser;
 class sinsp_filter;

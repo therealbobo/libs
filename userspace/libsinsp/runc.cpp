@@ -20,7 +20,6 @@ limitations under the License.
 
 #include <cstring>
 
-#include <libsinsp/sinsp.h>
 #include <libsinsp/sinsp_int.h>
 
 namespace {

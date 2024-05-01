@@ -30,6 +30,7 @@ limitations under the License.
 #endif // MINIMAL_BUILD
 #include <libsinsp/container_engine/static_container.h>
 
+#include <libsinsp/consts.h>
 #include <libsinsp/sinsp.h>
 #include <libsinsp/container.h>
 #include <libsinsp/sinsp_observer.h>

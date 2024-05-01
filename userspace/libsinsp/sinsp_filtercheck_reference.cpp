@@ -17,9 +17,7 @@ limitations under the License.
 */
 
 #include <libsinsp/sinsp_filtercheck_reference.h>
-#include <libsinsp/sinsp.h>
-
-#define STRPROPERTY_STORAGE_SIZE	1024
+#include <libsinsp/consts.h>
 
 using namespace std;
 
@@ -124,13 +122,6 @@ char* sinsp_filter_check_reference::format_bytes(double val, uint32_t str_len, b
 
 	return m_getpropertystr_storage.data();
 }
-
-//
-// convert a nanosecond time interval into a s.ns representation.
-// E.g. 1100000000 becomes 1.1s
-//
-#define ONE_MILLISECOND_IN_NS 1000000
-#define ONE_MICROSECOND_IN_NS 1000
 
 char* sinsp_filter_check_reference::format_time(uint64_t val, uint32_t str_len)
 {

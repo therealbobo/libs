@@ -30,6 +30,7 @@ limitations under the License.
 #include <libscap/scap_engines.h>
 #include <libsinsp/scap_open_exception.h>
 #include <libscap/scap_platform.h>
+#include <libsinsp/consts.h>
 #include <libsinsp/sinsp.h>
 #include <libsinsp/filter.h>
 #include <libsinsp/sinsp_filtercheck_gen_event.h>

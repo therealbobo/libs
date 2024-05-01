@@ -32,7 +32,8 @@ limitations under the License.
 #if !defined(__EMSCRIPTEN__)
 #include "tbb/concurrent_unordered_map.h"
 #endif
-#include <libsinsp/sinsp.h>
+#include <libsinsp/consts.h>
+#include <libsinsp/tuples.h>
 
 
 struct sinsp_dns_resolver
