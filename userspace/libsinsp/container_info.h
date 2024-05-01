@@ -19,14 +19,9 @@ limitations under the License.
 #pragma once
 
 #include <cassert>
-#include <cstdint>
-#include <map>
-#include <memory>
 #include <list>
-#include <string>
-#include <vector>
 #include <libsinsp/container_engine/sinsp_container_type.h>
-#include "json/json.h"
+#include <json/value.h>
 
 class sinsp;
 class sinsp_threadinfo;

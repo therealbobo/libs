@@ -23,7 +23,7 @@ limitations under the License.
 #include <libscap/scap_log.h>
 
 #include <atomic>
-#include <string>
+#include <iosfwd>
 
 /**
  * Component logging API.  This API exposes the ability to log to a

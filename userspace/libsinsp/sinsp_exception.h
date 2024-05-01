@@ -18,7 +18,7 @@ limitations under the License.
 #pragma once
 
 #include <stdexcept>
-#include <string>
+#include <iosfwd>
 
 /*!
   \brief sinsp library exception.

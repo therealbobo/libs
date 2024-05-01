@@ -18,10 +18,6 @@ limitations under the License.
 
 #pragma once
 
-#include <functional>
-#include <memory>
-#include <unordered_map>
-
 #include <libscap/scap.h>
 
 #include <libsinsp/event.h>

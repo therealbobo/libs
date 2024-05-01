@@ -20,7 +20,6 @@ limitations under the License.
 
 #include <libscap/metrics_v2.h>
 #include <libscap/scap_machine_info.h>
-#include <libsinsp/threadinfo.h>
 #include <libscap/strl.h>
 #include <cmath>
 #include <string_view>
