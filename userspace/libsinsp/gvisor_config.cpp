@@ -16,9 +16,8 @@ limitations under the License.
 
 */
 
-#include <iostream>
 #include <vector>
-#include <json/json.h>
+#include <json/value.h>
 
 #include <libsinsp/gvisor_config.h>
 

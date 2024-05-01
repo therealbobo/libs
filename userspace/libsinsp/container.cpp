@@ -16,8 +16,6 @@ limitations under the License.
 
 */
 
-#include <algorithm>
-
 #if !defined(MINIMAL_BUILD) && !defined(__EMSCRIPTEN__)
 #include <libsinsp/container_engine/cri.h>
 #ifndef _WIN32
@@ -33,9 +31,7 @@ limitations under the License.
 #include <libsinsp/container_engine/static_container.h>
 
 #include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
 #include <libsinsp/container.h>
-#include <libsinsp/utils.h>
 #include <libsinsp/sinsp_observer.h>
 
 using namespace libsinsp;

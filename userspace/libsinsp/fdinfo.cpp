@@ -21,8 +21,6 @@ limitations under the License.
 #include <algorithm>
 #endif
 #include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
-#include <libscap/scap-int.h>
 
 char sinsp_fdinfo::get_typechar() const
 {

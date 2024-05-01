@@ -16,8 +16,6 @@ limitations under the License.
 
 */
 
-#include <cstring>
-#include <iterator>
 #include <memory>
 #include <libsinsp/filter/escaping.h>
 #include <libsinsp/filter/parser.h>

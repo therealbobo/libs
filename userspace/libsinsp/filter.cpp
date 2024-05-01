@@ -26,11 +26,9 @@ limitations under the License.
 // code at every new release, and I will have a cleaner and easier to understand code base.
 //
 
-#include <algorithm>
 #include <iomanip>
 
 #include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
 #include <libsinsp/utils.h>
 #include <libsinsp/filter.h>
 #include <libsinsp/filter/parser.h>

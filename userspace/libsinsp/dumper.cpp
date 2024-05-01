@@ -17,7 +17,6 @@ limitations under the License.
 */
 
 #include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
 #include <libscap/scap.h>
 #include <libsinsp/dumper.h>
 

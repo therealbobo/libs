@@ -17,7 +17,6 @@ limitations under the License.
 */
 
 #include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
 
 sinsp_network_interfaces::sinsp_network_interfaces()
 {

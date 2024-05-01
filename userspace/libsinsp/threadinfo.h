@@ -32,6 +32,7 @@ struct iovec {
 #include <functional>
 #include <memory>
 #include <set>
+#include <libscap/scap_savefile_api.h>
 #include <libsinsp/fdinfo.h>
 #include <libsinsp/state/table.h>
 #include <libsinsp/thread_group_info.h>

@@ -31,11 +31,9 @@ limitations under the License.
 #include <limits>
 #include <string>
 #include <optional>
-#include <functional>
 #include <filesystem>
 
 #include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
 #include <libscap/strl.h>
 
 #include <libscap/scap.h>

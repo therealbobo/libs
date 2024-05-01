@@ -17,12 +17,8 @@ limitations under the License.
 */
 
 #include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
 #include <libsinsp/sinsp_errno.h>
 #include <libsinsp/sinsp_signal.h>
-#include <libsinsp/filter.h>
-#include <libsinsp/filter_check_list.h>
-#include <libsinsp/filterchecks.h>
 #include <libscap/strl.h>
 
 #if !defined(_WIN32) && !defined(MINIMAL_BUILD) && !defined(__EMSCRIPTEN__)
@@ -50,9 +46,6 @@ limitations under the License.
 #endif
 
 #include <algorithm>
-#include <cerrno>
-#include <functional>
-#include <sys/stat.h>
 #include <filesystem>
 
 #ifndef PATH_MAX

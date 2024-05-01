@@ -17,11 +17,7 @@ limitations under the License.
 */
 
 
-#include <inttypes.h>
-#include <string.h>
 #include <vector>
-#include <set>
-#include <sstream>
 #include <numeric>
 #include <json/json.h>
 #pragma GCC diagnostic push
@@ -32,7 +28,6 @@ limitations under the License.
 #include <valijson/schema_parser.hpp>
 #include <valijson/validator.hpp>
 
-#include <libsinsp/sinsp_int.h>
 #include <libsinsp/sinsp_exception.h>
 #include <libsinsp/plugin.h>
 #include <libsinsp/plugin_filtercheck.h>

@@ -17,8 +17,6 @@ limitations under the License.
 */
 
 #include <libsinsp/sinsp_cycledumper.h>
-#include <iostream>
-
 
 sinsp_cycledumper::sinsp_cycledumper(sinsp* inspector, const std::string& base_filename,
                     const int& rollover_mb, const int& duration_seconds,

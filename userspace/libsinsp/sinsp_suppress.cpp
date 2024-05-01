@@ -19,7 +19,6 @@ limitations under the License.
 #include <cstring>
 
 #include <libsinsp/sinsp_suppress.h>
-#include <libsinsp/sinsp_exception.h>
 #include <driver/ppm_events_public.h>
 #include <libscap/scap_const.h>
 #include <libscap/scap_assert.h>

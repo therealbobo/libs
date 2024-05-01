@@ -15,8 +15,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 */
-#include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
+#include <driver/ppm_events_public.h>
+#include <libsinsp/sinsp_exception.h>
+#include <libsinsp/sinsp_inet.h>
+#include <libsinsp/utils.h>
 #include <libsinsp/value_parser.h>
 
 #ifdef _WIN32

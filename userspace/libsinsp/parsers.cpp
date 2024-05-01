@@ -25,19 +25,11 @@ limitations under the License.
 #include <unistd.h>
 #endif // _WIN32
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <fcntl.h>
 #include <limits>
 
-#include <libsinsp/container_engine/mesos.h>
 #include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
 #include <libsinsp/parsers.h>
 #include <libsinsp/sinsp_errno.h>
-#include <libsinsp/filter.h>
-#include <libsinsp/filterchecks.h>
-#include <libscap/strl.h>
 #include <libsinsp/plugin_manager.h>
 #include <libsinsp/sinsp_observer.h>
 #include <libsinsp/sinsp_int.h>

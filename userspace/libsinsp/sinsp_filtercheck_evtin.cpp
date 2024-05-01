@@ -17,10 +17,6 @@ limitations under the License.
 */
 
 #include <libsinsp/sinsp_filtercheck_evtin.h>
-#include <libsinsp/sinsp_filtercheck_tracer.h>
-#include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
-#include <libscap/strl.h>
 
 using namespace std;
 

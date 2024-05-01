@@ -23,8 +23,6 @@ limitations under the License.
 #include <libsinsp/filter_check_list.h>
 #include <libsinsp/filterchecks.h>
 
-#include <libscap/strl.h>
-
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////

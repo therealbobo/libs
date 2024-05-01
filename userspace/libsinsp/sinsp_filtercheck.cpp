@@ -16,8 +16,8 @@ limitations under the License.
 
 */
 
-#include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
+#include <limits>
+
 #include <libsinsp/utils.h>
 #include <libscap/strl.h>
 #include <libsinsp/sinsp_filtercheck.h>

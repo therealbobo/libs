@@ -18,7 +18,6 @@ limitations under the License.
 
 #include <libsinsp/sinsp_filtercheck_reference.h>
 #include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
 
 #define STRPROPERTY_STORAGE_SIZE	1024
 

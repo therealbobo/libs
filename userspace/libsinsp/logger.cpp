@@ -16,8 +16,7 @@ limitations under the License.
 
 */
 #include <libsinsp/logger.h>
-#include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
+#include <libsinsp/sinsp_exception.h>
 #include <libscap/strl.h>
 
 #ifndef _WIN32
@@ -25,7 +24,7 @@ limitations under the License.
 #else
 #include <time.h>
 #endif
-#include <stdarg.h>
+#include <ctime>
 
 namespace
 {

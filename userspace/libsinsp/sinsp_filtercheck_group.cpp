@@ -17,8 +17,7 @@ limitations under the License.
 */
 
 #include <libsinsp/sinsp_filtercheck_group.h>
-#include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
+#include <libsinsp/threadinfo.h>
 
 using namespace std;
 

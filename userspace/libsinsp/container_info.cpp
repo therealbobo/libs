@@ -16,11 +16,8 @@ limitations under the License.
 
 */
 
-#include <utility>
-
 #include <libsinsp/container_info.h>
 #include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
 
 std::vector<std::string> sinsp_container_info::container_health_probe::probe_type_names = {
 	"None",

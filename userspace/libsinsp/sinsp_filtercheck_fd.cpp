@@ -17,8 +17,7 @@ limitations under the License.
 */
 
 #include <libsinsp/sinsp_filtercheck_fd.h>
-#include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
+#include <libsinsp/parsers.h>
 #include <libsinsp/dns_manager.h>
 
 using namespace std;

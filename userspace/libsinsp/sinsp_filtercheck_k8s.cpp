@@ -18,7 +18,6 @@ limitations under the License.
 
 #include <libsinsp/sinsp_filtercheck_k8s.h>
 #include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
 
 using namespace std;
 

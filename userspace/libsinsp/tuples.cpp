@@ -18,11 +18,9 @@ limitations under the License.
 
 #include <libsinsp/tuples.h>
 #include <string>
-#include <cstring>
 #include <libsinsp/sinsp_inet.h>
 #include <libsinsp/utils.h>
 #include <libsinsp/sinsp_exception.h>
-#include <libsinsp/logger.h>
 
 // ensure proper memory layout for ipv6addr class during compile time
 static_assert(sizeof(ipv6addr) == 16);

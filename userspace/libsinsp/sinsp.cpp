@@ -16,8 +16,6 @@ limitations under the License.
 
 */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #ifndef _WIN32
 #include <unistd.h>
@@ -33,13 +31,12 @@ limitations under the License.
 #include <libsinsp/scap_open_exception.h>
 #include <libscap/scap_platform.h>
 #include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
 #include <libsinsp/filter.h>
-#include <libsinsp/filterchecks.h>
+#include <libsinsp/sinsp_filtercheck_gen_event.h>
 #include <libsinsp/dns_manager.h>
+#include <libsinsp/parsers.h>
 #include <libsinsp/plugin.h>
 #include <libsinsp/plugin_manager.h>
-#include <libsinsp/plugin_filtercheck.h>
 #include <libscap/strl.h>
 #include <libscap/scap-int.h>
 
