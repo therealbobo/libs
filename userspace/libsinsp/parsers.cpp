@@ -2040,7 +2040,7 @@ void sinsp_parser::parse_execve_exit(sinsp_evt *evt)
 	evt->get_tinfo()->m_exe = parinfo->m_val;
 	evt->get_tinfo()->m_lastexec_ts = evt->get_ts();
 
-	auto container_id = evt->get_tinfo()->m_container_id;
+	const auto& container_id = evt->get_tinfo()->m_container_id;
 
 	switch(etype)
 	{
@@ -5443,7 +5443,7 @@ void sinsp_parser::parse_chroot_exit(sinsp_evt *evt)
 		}
 		// Root change, let's detect if we are on a container
 
-		auto container_id = evt->get_tinfo()->m_container_id;
+		const auto& container_id = evt->get_tinfo()->m_container_id;
 		m_inspector->m_container_manager.resolve_container(evt->get_tinfo(), m_inspector->is_live() || m_inspector->is_syscall_plugin());
 		//
 		// Refresh user / loginuser / group
