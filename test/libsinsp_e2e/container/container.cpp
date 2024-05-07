@@ -125,7 +125,8 @@ TEST_F(sys_call_test, container_cgroups)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	ASSERT_TRUE(done);
 }
 
@@ -201,7 +202,8 @@ TEST_F(sys_call_test, container_clone_nspid)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	ASSERT_TRUE(done);
 }
 
@@ -250,7 +252,8 @@ TEST_F(sys_call_test, container_clone_nspid_ioctl)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	free(stack);
 	ASSERT_TRUE(done);
 }
@@ -332,7 +335,8 @@ static void run_container_docker_test(bool fork_after_container_start)
 		done = true;
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	ASSERT_TRUE(done);
 }
 
@@ -436,7 +440,8 @@ TEST_F(sys_call_test, container_docker_bad_socket)
 	before_close_t cleanup = [&](sinsp* inspector)
 	{ inspector->set_docker_socket_path("/var/run/docker.sock"); };
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter, setup, cleanup); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, setup, cleanup); });
 	ASSERT_TRUE(done);
 }
 
@@ -523,7 +528,8 @@ TEST_F(sys_call_test, container_libvirt)
 		done = true;
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	ASSERT_TRUE(done);
 }
 
@@ -714,7 +720,8 @@ static void healthcheck_helper(
 		inspector->stop_dropping_mode();
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter, setup, cleanup); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, setup, cleanup); });
 
 	ASSERT_TRUE(cstate.root_cmd_seen) << capture_stats_str;
 	ASSERT_TRUE(cstate.second_cmd_seen) << capture_stats_str;
@@ -749,7 +756,8 @@ static void healthcheck_tracefile_helper(
 
 	captured_event_callback_t callback = [&](const callback_param& param) {return;};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	// Now reread the file we just wrote and pass it through
 	// update_container_state.
@@ -978,6 +986,7 @@ TEST_F(sys_call_test, docker_container_large_json)
 		param.m_inspector->set_container_labels_max_len(100);
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	ASSERT_TRUE(saw_container_evt);
 }

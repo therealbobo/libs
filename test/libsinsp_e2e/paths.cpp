@@ -191,7 +191,8 @@ void testdir(string filename, string chdirtarget = "")
 	captured_event_callback_t callback = [&](const callback_param& param)
 	{ vldt.validate(param.m_evt); };
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(4, vldt.m_callnum);
 }
@@ -588,7 +589,8 @@ TEST_F(sys_call_test, dir_getcwd)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(12, callnum);
 }
@@ -771,7 +773,8 @@ TEST_F(sys_call_test, dir_fchdir)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(12, callnum);
 }

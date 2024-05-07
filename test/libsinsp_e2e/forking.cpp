@@ -96,7 +96,8 @@ TEST_F(sys_call_test, forking)
 	//
 	captured_event_callback_t callback = [&](const callback_param& param) {};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 }
 
 TEST_F(sys_call_test, forking_while_scap_stopped)
@@ -211,7 +212,8 @@ TEST_F(sys_call_test, forking_while_scap_stopped)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_TRUE(child_exists);
 	EXPECT_TRUE(parent_exists);
@@ -300,16 +302,12 @@ TEST_F(sys_call_test, forking_process_expired)
 		}
 	};
 
+	event_capture ec(131072, 5 * ONE_SECOND_IN_NS, ONE_SECOND_IN_NS);
 	ASSERT_NO_FATAL_FAILURE({
-		event_capture::run(test,
-		                   callback,
-		                   filter,
+		ec.run(test, callback, filter,
 						   event_capture::do_nothing,
 						   event_capture::do_nothing,
-						   event_capture::always_continue,
-						   131072,
-						   5 * ONE_SECOND_IN_NS,
-		                   ONE_SECOND_IN_NS);
+						   event_capture::always_continue);
 	});
 
 	EXPECT_TRUE(sleep_caught);
@@ -507,7 +505,8 @@ TEST_F(sys_call_test, DISABLED_forking_clone_fs)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(callnum, 4);
 }
 
@@ -652,7 +651,8 @@ TEST_F(sys_call_test, forking_clone_nofs)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(callnum, 4);
 }
 
@@ -771,7 +771,8 @@ TEST_F(sys_call_test, forking_clone_cwd)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(3, callnum);
 }
@@ -856,7 +857,8 @@ TEST_F(sys_call_test, forking_main_thread_exit)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(3, callnum);
 }
 
@@ -1127,7 +1129,8 @@ TEST_F(sys_call_test, remove_stale_thread_clone_exit)
 		EXPECT_STRNE(tinfo->get_cwd().c_str(), "/dev/");
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	// We must have seen one clone related to the recycled
 	// pid. Otherwise it never actually checked the cwd at all.

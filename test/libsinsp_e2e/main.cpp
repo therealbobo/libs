@@ -18,6 +18,7 @@ limitations under the License.
 
 #include "sys_call_test.h"
 #include "libsinsp_test_var.h"
+#include "test/libsinsp_e2e/event_capture.h"
 
 #include <cstdlib>
 #include <filesystem>
@@ -172,7 +173,7 @@ int open_engine(int argc, char** argv)
 		{
 		case 'b':
 #ifdef HAS_ENGINE_BPF
-			event_capture::set_engine(BPF_ENGINE, LIBSINSP_TEST_BPF_PROBE_PATH);
+			event_capture_settings::set_engine(BPF_ENGINE, LIBSINSP_TEST_BPF_PROBE_PATH);
 #else
 			std::cerr << "BPF engine is not supported in this build" << std::endl;
 			return EXIT_FAILURE;
@@ -181,7 +182,7 @@ int open_engine(int argc, char** argv)
 
 		case 'm':
 #ifdef HAS_ENGINE_MODERN_BPF
-			event_capture::set_engine(MODERN_BPF_ENGINE, "");
+			event_capture_settings::set_engine(MODERN_BPF_ENGINE, "");
 #else
 			std::cerr << "Modern BPF engine is not supported in this build" << std::endl;
 			return EXIT_FAILURE;
@@ -191,7 +192,7 @@ int open_engine(int argc, char** argv)
 		case 'k':
 #ifdef HAS_ENGINE_KMOD
 			insert_kmod(LIBSINSP_TEST_KERNEL_MODULE_PATH);
-			event_capture::set_engine(KMOD_ENGINE, LIBSINSP_TEST_KERNEL_MODULE_PATH);
+			event_capture_settings::set_engine(KMOD_ENGINE, LIBSINSP_TEST_KERNEL_MODULE_PATH);
 #else
 			std::cerr << "Kernel module engine is not supported in this build" << std::endl;
 			return EXIT_FAILURE;
@@ -199,7 +200,7 @@ int open_engine(int argc, char** argv)
 			break;
 
 		case 'd':
-			event_capture::set_buffer_dim(strtoul(optarg, NULL, 10));
+			event_capture_settings::set_buffer_dim(strtoul(optarg, NULL, 10));
 			break;
 
 		case 'h':

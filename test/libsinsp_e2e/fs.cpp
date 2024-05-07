@@ -151,7 +151,8 @@ TEST_F(sys_call_test, fs_creat_ulink)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(6, callnum);
 }
@@ -285,7 +286,8 @@ TEST_F(sys_call_test, fs_mkdir_rmdir)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(8, callnum);
 }
@@ -378,7 +380,8 @@ TEST_F(sys_call_test, fs_openat)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(2, callnum);
 }
@@ -541,7 +544,8 @@ TEST_F(sys_call_test, fs_pread)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(10, callnum);
 }
@@ -648,7 +652,8 @@ TEST_F(sys_call_test, fs_readv)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(4, callnum);
 }
@@ -801,7 +806,8 @@ TEST_F(sys_call_test, fs_preadv)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	//	EXPECT_EQ(4, callnum);
 }
@@ -960,7 +966,8 @@ TEST_F(sys_call_test, fs_dup)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 #if defined(__x86_64__)
 	EXPECT_EQ(12, callnum);
@@ -1049,7 +1056,8 @@ TEST_F(sys_call_test, fs_fcntl)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(4, callnum);
 }
@@ -1117,7 +1125,8 @@ TEST_F(sys_call_test, fs_sendfile)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(2, callnum);
 }
@@ -1181,7 +1190,8 @@ TEST_F(sys_call_test, fs_sendfile_nulloff)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(2, callnum);
 }
@@ -1234,7 +1244,8 @@ TEST_F(sys_call_test, fs_sendfile_failed)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(2, callnum);
 }
@@ -1298,7 +1309,8 @@ TEST_F(sys_call_test, fs_sendfile_invalidoff)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(2, callnum);
 }
@@ -1364,7 +1376,8 @@ TEST_F(sys_call_test, fs_sendfile64)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(2, callnum);
 }
@@ -1466,10 +1479,8 @@ TEST_F(sys_call_test, large_read_write)
 	};
 
 	// We don't dump events to scap files, otherwise we could stuck with modern bpf.
-	ASSERT_NO_FATAL_FAILURE({event_capture::run(test, callback, filter, setup,
-							cleanup, event_capture::always_continue, 131072,
-							(uint64_t)60 * 1000 * 1000 * 1000, (uint64_t)60 * 1000 * 1000 * 1000,
-							SINSP_MODE_LIVE, 3, false); });
+	event_capture ec(131072, (uint64_t)60 * 1000 * 1000 * 1000, (uint64_t)60 * 1000 * 1000 * 1000, SINSP_MODE_LIVE, 3, false);
+	ASSERT_NO_FATAL_FAILURE({ec.run(test, callback, filter, setup, cleanup, event_capture::always_continue); });
 
 	EXPECT_EQ(4, callnum);
 }
@@ -1556,7 +1567,7 @@ TEST_F(sys_call_test, large_readv_writev)
 			if (callnum == 1)
 			{
 				const sinsp_evt_param* p = e->get_param_by_name("data");
-				if(event_capture::m_engine_string == KMOD_ENGINE)
+				if(event_capture_settings::get_engine() == KMOD_ENGINE)
 				{
 					//
 					// The driver doesn't have the correct behavior for accumulating
@@ -1586,7 +1597,7 @@ TEST_F(sys_call_test, large_readv_writev)
 			if (callnum == 3)
 			{
 				const sinsp_evt_param* p = e->get_param_by_name("data");
-				if(event_capture::m_engine_string == KMOD_ENGINE)
+				if(event_capture_settings::get_engine() == KMOD_ENGINE)
 				{
 					EXPECT_EQ(p->m_len, max_kmod_buf);
 					EXPECT_EQ(0, memcmp(buf, p->m_val, max_kmod_buf));
@@ -1608,10 +1619,10 @@ TEST_F(sys_call_test, large_readv_writev)
 	};
 
 	// We don't dump events to scap files, otherwise we could stuck with modern bpf.
-	ASSERT_NO_FATAL_FAILURE({event_capture::run(test, callback, filter, setup,
-							cleanup, event_capture::always_continue, 131072,
-							(uint64_t)60 * 1000 * 1000 * 1000, (uint64_t)60 * 1000 * 1000 * 1000,
-							SINSP_MODE_LIVE, 3, false); });
+	event_capture ec(131072, (uint64_t)60 * 1000 * 1000 * 1000,
+					 (uint64_t)60 * 1000 * 1000 * 1000, SINSP_MODE_LIVE, 3, false);
+	ASSERT_NO_FATAL_FAILURE({ec.run(test, callback, filter, setup,
+							cleanup, event_capture::always_continue); });
 
 	EXPECT_EQ(4, callnum);
 }
@@ -1655,17 +1666,17 @@ TEST_F(sys_call_test, large_open)
 		{
 			const sinsp_evt_param* p = e->get_param_by_name("name");
 
-			if(event_capture::m_engine_string == KMOD_ENGINE)
+			if(event_capture_settings::get_engine() == KMOD_ENGINE)
 			{
 				EXPECT_EQ(p->m_len, PPM_MAX_ARG_SIZE);
 				EXPECT_EQ(buf.substr(0, PPM_MAX_ARG_SIZE - 1), std::string(p->m_val));
 			}
-			else if(event_capture::m_engine_string == BPF_ENGINE)
+			else if(event_capture_settings::get_engine() == BPF_ENGINE)
 			{
 				EXPECT_EQ(p->m_len, SNAPLEN_MAX);
 				EXPECT_EQ(buf.substr(0, SNAPLEN_MAX - 1), std::string(p->m_val));
 			}
-			else if(event_capture::m_engine_string == MODERN_BPF_ENGINE)
+			else if(event_capture_settings::get_engine() == MODERN_BPF_ENGINE)
 			{
 				EXPECT_EQ(p->m_len, PATH_MAX);
 				EXPECT_EQ(buf.substr(0, PATH_MAX - 1), std::string(p->m_val));
@@ -1675,6 +1686,7 @@ TEST_F(sys_call_test, large_open)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(2, callnum);
 }

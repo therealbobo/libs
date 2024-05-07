@@ -109,8 +109,9 @@ TEST_F(sys_call_test, stat)
 		stat("/tmp", &sb);
 	};
 
-	captured_event_callback_t callback = [&](const callback_param& param) { callnum++; };
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	captured_event_callback_t callback = [&](const callback_param& param) {callnum++; };
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(2, callnum);
 }
 
@@ -140,7 +141,8 @@ TEST_F(sys_call_test, open_close)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(2, callnum);
 }
 
@@ -180,7 +182,8 @@ TEST_F(sys_call_test, open_close_dropping)
 		inspector->stop_dropping_mode();
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter, setup, cleanup); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, setup, cleanup); });
 	EXPECT_EQ(2, callnum);
 }
 
@@ -197,7 +200,8 @@ TEST_F(sys_call_test, fcntl_getfd)
 
 	captured_event_callback_t callback = [&](const callback_param& param) { callnum++; };
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(2, callnum);
 }
 
@@ -227,7 +231,8 @@ TEST_F(sys_call_test, fcntl_getfd_dropping)
 		inspector->stop_dropping_mode();
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter, setup, cleanup); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, setup, cleanup); });
 	EXPECT_EQ(0, callnum);
 }
 
@@ -243,7 +248,8 @@ TEST_F(sys_call_test, bind_error)
 
 	captured_event_callback_t callback = [&](const callback_param& param) { callnum++; };
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(2, callnum);
 }
 
@@ -273,7 +279,8 @@ TEST_F(sys_call_test, bind_error_dropping)
 		inspector->stop_dropping_mode();
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter, setup, cleanup); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, setup, cleanup); });
 	EXPECT_EQ(1, callnum);
 }
 
@@ -305,7 +312,8 @@ TEST_F(sys_call_test, close_badfd)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(4, callnum);
 }
 
@@ -348,7 +356,8 @@ TEST_F(sys_call_test, close_badfd_dropping)
 		inspector->stop_dropping_mode();
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter, setup, cleanup); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, setup, cleanup); });
 	EXPECT_EQ(0, callnum);
 }
 
@@ -433,7 +442,8 @@ TEST_F(sys_call_test, poll_timeout)
 			callnum++;
 		}
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(2, callnum);
 }
 #endif
@@ -484,7 +494,8 @@ TEST_F(sys_call_test, ioctl)
 			callnum++;
 		}
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 }
 
 TEST_F(sys_call_test, shutdown)
@@ -540,7 +551,8 @@ TEST_F(sys_call_test, shutdown)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(6, callnum);
 }
@@ -615,7 +627,8 @@ TEST_F(sys_call_test, timerfd)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(3, callnum);
 }
@@ -653,7 +666,8 @@ TEST_F(sys_call_test, timestamp)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ((int)(sizeof(timestampv) / sizeof(timestampv[0])), callnum);
 }
 
@@ -723,7 +737,8 @@ TEST_F(sys_call_test, brk)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(4, callnum);
 }
 
@@ -900,7 +915,8 @@ TEST_F(sys_call_test, mmap)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(8, callnum);
 }
 
@@ -960,7 +976,8 @@ TEST_F(sys_call_test, quotactl_ko)
 			}
 		}
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(4, callnum);
 }
 
@@ -1085,7 +1102,8 @@ TEST_F(sys_call_test, quotactl_ok)
 			}
 		}
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(8, callnum);
 }
 
@@ -1166,7 +1184,8 @@ TEST_F(sys_call_test, getsetuid_and_gid)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	// This has to be done without a callback otherwise the test will not
 	// work.
@@ -1256,7 +1275,8 @@ TEST_F(sys_call_test32, execve_ia32_emulation)
 			}
 		}
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter, before_open); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, before_open); });
 	EXPECT_EQ(8, callnum);
 }
 
@@ -1311,7 +1331,8 @@ TEST_F(sys_call_test32, quotactl_ko)
 			}
 		}
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(4, callnum);
 }
 
@@ -1348,7 +1369,8 @@ TEST_F(sys_call_test, setns_test)
 		}
 		++callnum;
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(2, callnum);
 }
 
@@ -1387,7 +1409,8 @@ TEST_F(sys_call_test, unshare_)
 		}
 		++callnum;
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(2, callnum);
 }
 
@@ -1481,7 +1504,8 @@ TEST_F(sys_call_test, sendmsg_recvmsg_SCM_RIGHTS)
 			}
 		}
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(1, callnum);
 }
 
@@ -1532,7 +1556,8 @@ TEST_F(sys_call_test, ppoll_timeout)
 			callnum++;
 		}
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(2, callnum);
 }
 
@@ -1692,7 +1717,8 @@ TEST_F(sys_call_test, getsetresuid_and_gid)
 		}
 	};
 	
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter, event_capture::do_nothing, cleanup); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, event_capture::do_nothing, cleanup); });
 	EXPECT_EQ(8, callnum);
 }
 
@@ -1748,7 +1774,8 @@ TEST_F(sys_call_test, failing_execve)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(2, callnum);
 }
 
@@ -1865,7 +1892,8 @@ TEST_F(sys_call_test, large_execve)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(4, callnum);
 }
 
@@ -1971,7 +1999,8 @@ TEST_F(sys_call_test32, failing_execve)
 			}
 		}
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter, before_open); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, before_open); });
 	EXPECT_EQ(10, callnum);
 }
 
@@ -2159,7 +2188,8 @@ TEST_F(sys_call_test32, mmap)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(8, callnum);
 }
 
@@ -2241,7 +2271,8 @@ TEST_F(sys_call_test32, ppoll_timeout)
 			callnum++;
 		}
 	};
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(2, callnum);
 }
 
@@ -2355,7 +2386,8 @@ TEST_F(sys_call_test32, fs_preadv)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(6, callnum);
 	if (pwritev64_succeeded)
 	{
@@ -2409,8 +2441,8 @@ TEST_F(sys_call_test, thread_lookup_static)
  		platform = (scap_linux_platform*)inspector->get_scap_platform();
  	};
 
- 	ASSERT_NO_FATAL_FAILURE(
- 	    { event_capture::run(test, callback, filter, event_capture::do_nothing, before_close); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, event_capture::do_nothing, before_close); });
 
  	ASSERT_EQ(SCAP_SUCCESS,
  	          scap_proc_read_thread(platform, proc, 1, &scap_tinfo, err_buf, false));
@@ -2489,8 +2521,8 @@ TEST_F(sys_call_test, thread_lookup_live)
  		//close_capture(scap, platform);
  		platform = (scap_linux_platform*)inspector->get_scap_platform();
  	};
- 	ASSERT_NO_FATAL_FAILURE(
- 	    { event_capture::run(test, callback, filter, event_capture::do_nothing, before_close); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, event_capture::do_nothing, before_close); });
 
  	ASSERT_EQ(SCAP_SUCCESS,
  	          scap_proc_read_thread(platform, proc, getpid(),

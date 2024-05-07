@@ -137,18 +137,9 @@ static void test_helper_quotactl(test_helper_args& hargs)
 		inspector->clear_suppress_events_tid();
 	};
 
+	event_capture ec(131072, 6000, 6000, SINSP_MODE_LIVE, 1000);
 	ASSERT_NO_FATAL_FAILURE({
-		event_capture::run(test,
-				callback,
-				filter,
-				before_open,
-				before_close,
-				should_continue,
-				131072,
-				6000,
-				6000,
-				SINSP_MODE_LIVE,
-				1000);
+		ec.run(test, callback, filter, before_open, before_close, should_continue);
 	});
 }
 
@@ -344,7 +335,8 @@ void suppress_types::run_test(std::vector<std::string> supp_syscalls)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, m_tid_filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, m_tid_filter); });
 	EXPECT_EQ(m_expected_calls, callnum);
 }
 

@@ -118,6 +118,34 @@ typedef std::function<bool()> capture_continue_t;
 
 typedef std::function<void(concurrent_object_handle<sinsp> inspector)> run_callback_t;
 
+class event_capture_settings
+{
+public:
+	event_capture_settings();
+	~event_capture_settings() = default;
+	static event_capture_settings& get();
+
+	static void set_engine(const std::string& engine_string, const std::string& engine_path);
+	static const std::string& get_engine();
+	static void set_buffer_dim(const unsigned long& dim);
+	static const unsigned long& get_buffer_dim();
+	static const std::string& get_engine_path();
+	static void set_inspector_initialized(bool v);
+	static const bool& is_inspector_initialized();
+
+private:
+	static std::unique_ptr<event_capture_settings> s_instance;
+
+	event_capture_settings(const event_capture_settings&) = delete;
+	event_capture_settings& operator=(const event_capture_settings&) = delete;
+
+	std::string m_engine_string;
+	std::string m_engine_path;
+	unsigned long m_buffer_dim;
+	bool m_inspector_initialized;
+};
+
+
 class event_capture
 {
 public:
@@ -137,73 +165,19 @@ public:
 			return &inspector;
 	}
 
-	static void run(run_callback_t run_function,
+	event_capture(uint32_t max_thread_table_size = 131072,
+		      uint64_t thread_timeout_ns = (uint64_t)60 * 1000 * 1000 * 1000,
+		      uint64_t inactive_thread_scan_time_ns = (uint64_t)60 * 1000 * 1000 * 1000,
+		      sinsp_mode_t mode = SINSP_MODE_LIVE, uint64_t max_timeouts = 3, bool dump = true);
+
+	void run(run_callback_t run_function,
 	                captured_event_callback_t captured_event_callback,
 	                event_filter_t filter,
 	                before_open_t before_open = event_capture::do_nothing,
 	                before_close_t before_close = event_capture::do_nothing,
-	                capture_continue_t capture_continue = event_capture::always_continue,
-	                uint32_t max_thread_table_size = 131072,
-	                uint64_t thread_timeout_ns = (uint64_t)60 * 1000 * 1000 * 1000,
-	                uint64_t inactive_thread_scan_time_ns = (uint64_t)60 * 1000 * 1000 * 1000,
-	                sinsp_mode_t mode = SINSP_MODE_LIVE,
-	                uint64_t max_timeouts = 3,
-	                bool dump = true)
-	{
-		event_capture capturing;
-		{  // Synchronized section
-			std::unique_lock<std::mutex> object_state_lock(capturing.m_object_state_mutex);
-			capturing.m_mode = mode;
-			capturing.m_captured_event_callback = captured_event_callback;
-			capturing.m_before_open = before_open;
-			capturing.m_before_close = before_close;
-			capturing.m_capture_continue = capture_continue;
-			capturing.m_filter = filter;
-			capturing.m_max_thread_table_size = max_thread_table_size;
-			capturing.m_thread_timeout_ns = thread_timeout_ns;
-			capturing.m_inactive_thread_scan_time_ns = inactive_thread_scan_time_ns;
-			capturing.m_max_timeouts = max_timeouts;
-			capturing.m_dump = dump;
-		}
-
-
-		std::thread thread([&capturing]() {
-			capturing.capture();
-		});
-
-		capturing.wait_for_capture_start();
-
-		if (!capturing.m_start_failed.load())
-		{
-			run_function(capturing.get_inspector_handle());
-			capturing.stop_capture();
-			capturing.wait_for_capture_stop();
-		}
-		else
-		{
-			std::unique_lock<std::mutex> error_lookup_lock(capturing.m_object_state_mutex);
-			GTEST_MESSAGE_(capturing.m_start_failure_message.c_str(),
-			               ::testing::TestPartResult::kFatalFailure);
-		}
-
-		thread.join();
-	}
-
-	static void set_engine(const std::string& engine_string, const std::string& engine_path);
-	static const std::string& get_engine();
-	static void set_buffer_dim(const unsigned long& dim);
-	static const std::string& get_engine_path();
-	static std::string m_engine_string;
-	static std::string m_engine_path;
-	static unsigned long m_buffer_dim;
+	                capture_continue_t capture_continue = event_capture::always_continue);
 
 private:
-	event_capture()
-	    : m_capture_started(false),
-	      m_capture_stopped(false),
-	      m_start_failed(false)
-	{
-	}
 
 	concurrent_object_handle<sinsp> get_inspector_handle();
 
@@ -232,7 +206,6 @@ private:
 	std::string m_start_failure_message;
 	std::string m_dump_filename;
 	callback_param m_param;
-	static bool inspector_ok;
 	sinsp_mode_t m_mode;
 	uint64_t m_max_timeouts;
 	bool m_dump;

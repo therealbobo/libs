@@ -44,7 +44,8 @@ TEST_F(sys_call_test, can_consume_a_capture_file)
 	};
 
 	captured_event_callback_t callback = [&](const callback_param& param) { callnum++; };
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(100, callnum);
 
 	sinsp inspector;

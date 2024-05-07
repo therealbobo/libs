@@ -634,7 +634,8 @@ TEST_F(sys_call_test, udp_client_server)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 }
 
 TEST_F(sys_call_test, udp_client_server_with_connect_by_client)
@@ -680,7 +681,8 @@ TEST_F(sys_call_test, udp_client_server_with_connect_by_client)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	ASSERT_EQ(1, callnum);
 }
 
@@ -746,7 +748,8 @@ TEST_F(sys_call_test, udp_client_server_sendmsg)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 }
 
 TEST_F(sys_call_test, udp_client_server_sendmsg_2buf)
@@ -810,7 +813,8 @@ TEST_F(sys_call_test, udp_client_server_sendmsg_2buf)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 }
 
 static void run_fd_name_changed_test(bool use_sendmsg,
@@ -856,7 +860,8 @@ static void run_fd_name_changed_test(bool use_sendmsg,
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter, before_open); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, before_open); });
 
 	ASSERT_EQ(num_name_changed_evts, expected_name_changed_evts);
 }
@@ -967,7 +972,8 @@ TEST_F(sys_call_test, udp_client_server_multiple_connect_name_changed)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter, before_open); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, before_open); });
 
 	// Every connect should result in a name changed event other than the duplicate port.
 	ASSERT_EQ(num_name_changed_evts, 4u);
@@ -1046,7 +1052,8 @@ TEST_F(sys_call_test, statsd_client_snaplen)
 	};
 
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter, setup, cleanup); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter, setup, cleanup); });
 	EXPECT_EQ(4, n);
 }
 
@@ -1106,6 +1113,7 @@ TEST_F(sys_call_test, statsd_client_no_snaplen)
 		    << "Failure on " << e->get_name() << " n=" << n;
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_EQ(4, n);
 }

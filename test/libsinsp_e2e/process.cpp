@@ -234,7 +234,8 @@ TEST_F(sys_call_test, process_signalfd_kill)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(7, callnum);
 }
@@ -294,7 +295,8 @@ TEST_F(sys_call_test, DISABLED_process_usleep)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(4, callnum);
 }
@@ -392,7 +394,8 @@ TEST_F(sys_call_test, process_inotify)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(3, callnum);
 }
@@ -558,7 +561,8 @@ TEST_F(sys_call_test, process_rlimit)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(8, callnum);
 }
@@ -655,7 +659,8 @@ TEST_F(sys_call_test, process_prlimit)
 		return;
 	}
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(6, callnum);
 }
@@ -811,7 +816,8 @@ TEST_F(sys_call_test, process_scap_proc_get)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 }
 
 TEST_F(sys_call_test, procinfo_processchild_cpuload)
@@ -886,7 +892,8 @@ TEST_F(sys_call_test, procinfo_processchild_cpuload)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 }
 
 TEST_F(sys_call_test, procinfo_two_processchilds_cpuload)
@@ -984,5 +991,6 @@ TEST_F(sys_call_test, procinfo_two_processchilds_cpuload)
 		}
 	};
 
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 }

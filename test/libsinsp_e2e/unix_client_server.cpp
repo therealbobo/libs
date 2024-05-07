@@ -271,7 +271,8 @@ TEST_F(sys_call_test, unix_client_server)
 	//
 	// OUTPUT VALDATION
 	//
-	ASSERT_NO_FATAL_FAILURE({ event_capture::run(test, callback, filter); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 	EXPECT_FALSE(first_connect_or_accept_seen);
 	EXPECT_EQ(8, callnum);
 }
