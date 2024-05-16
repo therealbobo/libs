@@ -24,13 +24,13 @@ jobs:
         name: [system_deps, bundled_deps, system_deps_minimal, sanitizers]
         include:
           - name: system_deps
-            cmake_opts: -DBUILD_WARNINGS_AS_ERRORS=On -DBUILD_BPF=On -DUSE_BUNDLED_DEPS=False
+            cmake_opts: system-deps
           - name: bundled_deps
-            cmake_opts: -DBUILD_WARNINGS_AS_ERRORS=On -DBUILD_BPF=On -DUSE_BUNDLED_DEPS=True
+            cmake_opts: bundled
           - name: system_deps_minimal
-            cmake_opts: -DBUILD_WARNINGS_AS_ERRORS=On -DUSE_BUNDLED_DEPS=False -DMINIMAL_BUILD=True
+            cmake_opts: system-deps-minimal
           - name: sanitizers
-            cmake_opts: -DUSE_ASAN=On -DUSE_UBSAN=On -DUSE_BUNDLED_DEPS=False
+            cmake_opts: system-deps-sanitizers
     container:
       image: debian:buster
     steps:
@@ -56,8 +56,9 @@ jobs:
           UBSAN_OPTIONS: print_stacktrace=1
         run: |
           mkdir -p build
-          cd build && cmake ${{ matrix.cmake_opts }} ../
-          KERNELDIR=/lib/modules/$(ls /lib/modules)/build make -j4
+          cd build
+          cmake -S .. -B . --preset ${{ matrix.cmake_opts }}
+          KERNELDIR=/lib/modules/$(ls /lib/modules)/build make -j$(nproc)
           make run-unit-tests
 
   build-libs-linux-amd64-static:

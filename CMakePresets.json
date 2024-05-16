@@ -1,0 +1,139 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "Default Config",
+      "description": "Default build with 'bundled' libs",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+
+        "BUILD_BPF": "ON",
+        "BUILD_DRIVER": "ON",
+        "BUILD_LIBSCAP_MODERN_BPF": "ON",
+
+        "BUILD_WARNINGS_AS_ERRORS": "ON",
+        "MINIMAL_BUILD": "OFF",
+        "USE_BUNDLED_DEPS": "ON"
+      }
+    },
+    {
+      "name": "system-deps",
+      "displayName": "Default Config",
+      "description": "Default build with 'system deps",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+
+        "BUILD_BPF": "ON",
+        "BUILD_DRIVER": "ON",
+        "BUILD_LIBSCAP_MODERN_BPF": "ON",
+
+        "BUILD_WARNINGS_AS_ERRORS": "ON",
+        "MINIMAL_BUILD": "OFF",
+        "USE_BUNDLED_DEPS": "OFF"
+      }
+    },
+    {
+      "name": "system-deps-minimal",
+      "displayName": "Default Config",
+      "description": "Default build with 'system deps",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+
+        "BUILD_BPF": "ON",
+        "BUILD_DRIVER": "ON",
+        "BUILD_LIBSCAP_MODERN_BPF": "ON",
+
+        "BUILD_WARNINGS_AS_ERRORS": "ON",
+        "MINIMAL_BUILD": "OFF",
+        "USE_BUNDLED_DEPS": "OFF"
+      }
+    },
+    {
+      "name": "bundled",
+      "displayName": "Default Config + sanitizers",
+      "description": "Default build with 'bundled' libs and sanitizers enabled.",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+
+        "BUILD_BPF": "ON",
+        "BUILD_DRIVER": "ON",
+        "BUILD_LIBSCAP_MODERN_BPF": "ON",
+
+        "BUILD_WARNINGS_AS_ERRORS": "ON",
+        "MINIMAL_BUILD": "OFF",
+        "USE_BUNDLED_DEPS": "ON"
+      }
+    },
+    {
+      "name": "bundled-sanitizers",
+      "displayName": "Default Config + sanitizers",
+      "description": "Default build with 'bundled' libs and sanitizers enabled.",
+      "binaryDir": "${sourceDir}/build",
+      "inherits": "bundled",
+      "cacheVariables": {
+        "USE_ASAN": "ON",
+        "USE_UBSAN": "ON"
+      }
+    },
+    {
+      "name": "system-deps-sanitizers",
+      "displayName": "Default Config + sanitizers",
+      "description": "Default build with 'bundled' libs and sanitizers enabled.",
+      "binaryDir": "${sourceDir}/build",
+      "inherits": "system-deps",
+      "cacheVariables": {
+        "USE_ASAN": "ON",
+        "USE_UBSAN": "ON"
+      }
+    },
+    {
+      "name": "bundled-tests-sanitizers",
+      "displayName": "Default Config + tests + sanitizers",
+      "description": "Default build with 'bundled' libs with tests and sanitizers enabled.",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+
+        "BUILD_BPF": "ON",
+        "BUILD_DRIVER": "ON",
+        "BUILD_LIBSCAP_MODERN_BPF": "ON",
+
+        "CREATE_TEST_TARGETS": "ON",
+        "ENABLE_LIBSCAP_TESTS": "ON",
+        "ENABLE_LIBSINSP_E2E_TESTS": "ON",
+
+        "BUILD_WARNINGS_AS_ERRORS": "ON",
+        "MINIMAL_BUILD": "OFF",
+        "USE_ASAN": "ON",
+        "USE_UBSAN": "ON"
+      }
+    },
+    {
+      "name": "clang-bundled",
+      "inherits": "default",
+      "displayName": "Clang Config",
+      "description": "Build using Clang",
+      "binaryDir": "${sourceDir}/build_clang_bundled",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/usr/bin/clang",
+        "CMAKE_CXX_COMPILER": "/usr/bin/clang++"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default"
+    }
+  ]
+}
