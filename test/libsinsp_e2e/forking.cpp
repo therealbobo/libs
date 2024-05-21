@@ -303,12 +303,7 @@ TEST_F(sys_call_test, forking_process_expired)
 	};
 
 	event_capture ec(131072, 5 * ONE_SECOND_IN_NS, ONE_SECOND_IN_NS);
-	ASSERT_NO_FATAL_FAILURE({
-		ec.run(test, callback, filter,
-						   event_capture::do_nothing,
-						   event_capture::do_nothing,
-						   event_capture::always_continue);
-	});
+	ASSERT_NO_FATAL_FAILURE({ec.run(test, callback, filter);});
 
 	EXPECT_TRUE(sleep_caught);
 }

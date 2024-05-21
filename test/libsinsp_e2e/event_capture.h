@@ -154,6 +154,7 @@ public:
 	void stop_capture();
 	void wait_for_capture_start();
 	void wait_for_capture_stop();
+	void dump_to_scap(bool v);
 
 	static void do_nothing(sinsp* inspector) {}
 
@@ -168,7 +169,7 @@ public:
 	event_capture(uint32_t max_thread_table_size = 131072,
 		      uint64_t thread_timeout_ns = (uint64_t)60 * 1000 * 1000 * 1000,
 		      uint64_t inactive_thread_scan_time_ns = (uint64_t)60 * 1000 * 1000 * 1000,
-		      sinsp_mode_t mode = SINSP_MODE_LIVE, uint64_t max_timeouts = 3, bool dump = true);
+		      sinsp_mode_t mode = SINSP_MODE_LIVE, uint64_t max_timeouts = 3, bool dump = false);
 
 	void run(run_callback_t run_function,
 	                captured_event_callback_t captured_event_callback,

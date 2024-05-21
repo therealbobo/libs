@@ -279,6 +279,11 @@ void event_capture::wait_for_capture_stop()
 	});
 }
 
+void event_capture::dump_to_scap(bool v)
+{
+	m_dump = v;
+}
+
 void event_capture::re_read_dump_file()
 {
 	try

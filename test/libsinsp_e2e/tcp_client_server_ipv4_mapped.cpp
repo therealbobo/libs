@@ -670,8 +670,7 @@ void runtest_ipv4m(iotype iot,
 		}
 	};
 
-	event_capture ec(131072, (uint64_t)60 * 1000 * 1000 * 1000,
-					 (uint64_t)60 * 1000 * 1000 * 1000, SINSP_MODE_LIVE, 3, false);
+	event_capture ec;
 	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 }
 

@@ -1479,8 +1479,8 @@ TEST_F(sys_call_test, large_read_write)
 	};
 
 	// We don't dump events to scap files, otherwise we could stuck with modern bpf.
-	event_capture ec(131072, (uint64_t)60 * 1000 * 1000 * 1000, (uint64_t)60 * 1000 * 1000 * 1000, SINSP_MODE_LIVE, 3, false);
-	ASSERT_NO_FATAL_FAILURE({ec.run(test, callback, filter, setup, cleanup, event_capture::always_continue); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ec.run(test, callback, filter, setup, cleanup); });
 
 	EXPECT_EQ(4, callnum);
 }
@@ -1619,10 +1619,8 @@ TEST_F(sys_call_test, large_readv_writev)
 	};
 
 	// We don't dump events to scap files, otherwise we could stuck with modern bpf.
-	event_capture ec(131072, (uint64_t)60 * 1000 * 1000 * 1000,
-					 (uint64_t)60 * 1000 * 1000 * 1000, SINSP_MODE_LIVE, 3, false);
-	ASSERT_NO_FATAL_FAILURE({ec.run(test, callback, filter, setup,
-							cleanup, event_capture::always_continue); });
+	event_capture ec;
+	ASSERT_NO_FATAL_FAILURE({ec.run(test, callback, filter, setup, cleanup); });
 
 	EXPECT_EQ(4, callnum);
 }

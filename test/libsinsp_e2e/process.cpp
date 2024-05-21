@@ -395,6 +395,7 @@ TEST_F(sys_call_test, process_inotify)
 	};
 
 	event_capture ec;
+	ec.dump_to_scap(true);
 	ASSERT_NO_FATAL_FAILURE({ ec.run(test, callback, filter); });
 
 	EXPECT_EQ(3, callnum);
