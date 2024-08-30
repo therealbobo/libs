@@ -4909,6 +4909,36 @@ void sinsp_parser::parse_context_switch(sinsp_evt* evt)
 	}
 }
 
+void sinsp_parser::parse_mmap_enter(sinsp_evt* evt)
+{
+	auto tinfo = evt->get_tinfo();
+
+	if(tinfo == nullptr)
+	{
+		return;
+	}
+
+	int fd = evt->get_param(5)->as<int64_t>();
+
+	if(fd >= 0)
+	{
+		uint32_t flags = evt->get_param(4)->as<uint32_t>();
+		//
+		// Populate the new fdi
+		//
+		auto fdi = evt->get_tinfo()->get_fd(fd);
+		if(flags & PPM_FD_UPPER_LAYER)
+		{
+			fdi->set_overlay_upper();
+		}
+		if(flags & PPM_FD_LOWER_LAYER)
+		{
+			fdi->set_overlay_lower();
+		}
+	}
+
+}
+
 void sinsp_parser::parse_brk_munmap_mmap_exit(sinsp_evt* evt)
 {
 	if(evt->get_tinfo() == nullptr)

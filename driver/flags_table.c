@@ -406,6 +406,8 @@ const struct ppm_name_value mmap_flags[] = {
 	{"MAP_INHERIT", PPM_MAP_INHERIT},
 	{"MAP_FILE", PPM_MAP_FILE},
 	{"MAP_LOCKED", PPM_MAP_LOCKED},
+	{"FD_UPPER_LAYER", PPM_FD_UPPER_LAYER_MMAP},
+	{"FD_LOWER_LAYER", PPM_FD_LOWER_LAYER_MMAP},
 	{0, 0},
 };
 

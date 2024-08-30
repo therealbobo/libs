@@ -7,6 +7,7 @@
  */
 
 #include <helpers/interfaces/fixed_size_event.h>
+#include <helpers/extract/extract_from_kernel.h>
 
 /*=============================== ENTER EVENT ===========================*/
 
@@ -37,12 +38,32 @@ int BPF_PROG(mmap_e,
 	unsigned long prot = extract__syscall_argument(regs, 2);
 	ringbuf__store_u32(&ringbuf, prot_flags_to_scap(prot));
 
+	int32_t fd = (int32_t)extract__syscall_argument(regs, 4);
+
 	/* Parameter 4: flags (type: PT_FLAGS32) */
 	unsigned long flags = extract__syscall_argument(regs, 3);
-	ringbuf__store_u32(&ringbuf, mmap_flags_to_scap(flags));
+	uint32_t scap_flags = mmap_flags_to_scap(flags);
+
+	// Extract overlay info
+	struct file* f = extract__file_struct_from_fd(fd);
+	enum ppm_overlay ol = PPM_NOT_OVERLAY_FS;
+	if(f)
+	{
+		ol = extract__overlay_layer(f);
+	}
+
+	if(ol == PPM_OVERLAY_UPPER)
+	{
+		scap_flags |= PPM_FD_UPPER_LAYER_MMAP;
+	}
+	else if(ol == PPM_OVERLAY_LOWER)
+	{
+		scap_flags |= PPM_FD_LOWER_LAYER_MMAP;
+	}
+
+	ringbuf__store_u32(&ringbuf, scap_flags);
 
 	/* Paremeter 5: fd (type: PT_FD) */
-	int32_t fd = (int32_t)extract__syscall_argument(regs, 4);
 	ringbuf__store_s64(&ringbuf, (int64_t)fd);
 
 	/* Parameter 6: offset (type: PT_UINT64) */

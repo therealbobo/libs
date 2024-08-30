@@ -4735,18 +4735,39 @@ int f_sys_mmap_e(struct event_filler_arguments *args)
 	res = val_to_ring(args, prot_flags_to_scap(val), 0, false, 0);
 	CHECK_RES(res);
 
+	// get fd
+	syscall_get_arguments_deprecated(args, 4, 1, &val);
+	fd = (int32_t)val;
+	// get flags
+	syscall_get_arguments_deprecated(args, 3, 1, &val);
+	uint32_t scap_flags = mmap_flags_to_scap(val);
+
+
+	uint32_t dev = 0;
+	uint64_t ino = 0;
+	enum ppm_overlay ol;
+
+	get_dev_ino_overlay_from_fd(fd, &dev, &ino, &ol);
+
+	if(ol == PPM_OVERLAY_UPPER)
+	{
+		scap_flags |= PPM_FD_UPPER_LAYER_MMAP;
+	}
+	else if(ol == PPM_OVERLAY_LOWER)
+	{
+		scap_flags |= PPM_FD_LOWER_LAYER_MMAP;
+	}
+
+
 	/*
 	 * flags
 	 */
-	syscall_get_arguments_deprecated(args, 3, 1, &val);
-	res = val_to_ring(args, mmap_flags_to_scap(val), 0, false, 0);
+	res = val_to_ring(args, scap_flags, 0, false, 0);
 	CHECK_RES(res);
 
 	/*
 	 * fd
 	 */
-	syscall_get_arguments_deprecated(args, 4, 1, &val);
-	fd = (int32_t)val;
 	res = val_to_ring(args, (int64_t)fd, 0, false, 0);
 	CHECK_RES(res);
 
@@ -5140,15 +5161,15 @@ int f_sys_copy_file_range_e(struct event_filler_arguments *args)
 	CHECK_RES(res);
 
 	/*
-	* offin
-	*/
+	 * offin
+	 */
 	syscall_get_arguments_deprecated(args, 1, 1, &offin);
 	res = val_to_ring(args, offin, 0, false, 0);
 	CHECK_RES(res);
 
 	/*
-	* len
-	*/
+	 * len
+	 */
 	syscall_get_arguments_deprecated(args, 4, 1, &len);
 	res = val_to_ring(args, len, 0, false, 0);
 	CHECK_RES(res);
@@ -5606,61 +5627,61 @@ int f_sys_fsconfig_x(struct event_filler_arguments *args)
 		/* see https://elixir.bootlin.com/linux/latest/source/fs/fsopen.c#L271 */
 		switch(scap_cmd)
 		{
-		case PPM_FSCONFIG_SET_FLAG:
-		case PPM_FSCONFIG_SET_FD:
-		case PPM_FSCONFIG_CMD_CREATE:
-		case PPM_FSCONFIG_CMD_RECONFIGURE:
-			/* Since `value` is NULL we send two empty params. */
+			case PPM_FSCONFIG_SET_FLAG:
+			case PPM_FSCONFIG_SET_FD:
+			case PPM_FSCONFIG_CMD_CREATE:
+			case PPM_FSCONFIG_CMD_RECONFIGURE:
+				/* Since `value` is NULL we send two empty params. */
 
-			/* Parameter 5: value_bytebuf (type: PT_BYTEBUF) */
-			res = val_to_ring(args, 0, 0, true, 0);
-			CHECK_RES(res);
+				/* Parameter 5: value_bytebuf (type: PT_BYTEBUF) */
+				res = val_to_ring(args, 0, 0, true, 0);
+				CHECK_RES(res);
 
-			/* Parameter 6: value_charbuf (type: PT_CHARBUF) */
-			res = val_to_ring(args, 0, 0, true, 0);
-			CHECK_RES(res);
-			break;
+				/* Parameter 6: value_charbuf (type: PT_CHARBUF) */
+				res = val_to_ring(args, 0, 0, true, 0);
+				CHECK_RES(res);
+				break;
 
-		case PPM_FSCONFIG_SET_STRING:
-		case PPM_FSCONFIG_SET_PATH:
-		case PPM_FSCONFIG_SET_PATH_EMPTY:
-			/* `value` is a NUL-terminated string.
-			 * Push `value_charbuf` but not `value_bytebuf` (empty).
-			 */
+			case PPM_FSCONFIG_SET_STRING:
+			case PPM_FSCONFIG_SET_PATH:
+			case PPM_FSCONFIG_SET_PATH_EMPTY:
+				/* `value` is a NUL-terminated string.
+				 * Push `value_charbuf` but not `value_bytebuf` (empty).
+				 */
 
-			/* Parameter 5: value_bytebuf (type: PT_BYTEBUF) */
-			res = val_to_ring(args, 0, 0, true, 0);
-			CHECK_RES(res);
+				/* Parameter 5: value_bytebuf (type: PT_BYTEBUF) */
+				res = val_to_ring(args, 0, 0, true, 0);
+				CHECK_RES(res);
 
-			/* Parameter 6: value_charbuf (type: PT_CHARBUF) */
-			res = val_to_ring(args, value_pointer, 0, true, 0);
-			CHECK_RES(res);
-			break;
+				/* Parameter 6: value_charbuf (type: PT_CHARBUF) */
+				res = val_to_ring(args, value_pointer, 0, true, 0);
+				CHECK_RES(res);
+				break;
 
-		case PPM_FSCONFIG_SET_BINARY:
-			/* `value` points to a binary blob and `aux` indicates its size.
-			 * Push `value_bytebuf` but not `value_charbuf` (empty).
-			 */
+			case PPM_FSCONFIG_SET_BINARY:
+				/* `value` points to a binary blob and `aux` indicates its size.
+				 * Push `value_bytebuf` but not `value_charbuf` (empty).
+				 */
 
-			/* Parameter 5: value_bytebuf (type: PT_BYTEBUF) */
-			res = val_to_ring(args, value_pointer, aux, true, 0);
-			CHECK_RES(res);
+				/* Parameter 5: value_bytebuf (type: PT_BYTEBUF) */
+				res = val_to_ring(args, value_pointer, aux, true, 0);
+				CHECK_RES(res);
 
-			/* Parameter 6: value_charbuf (type: PT_CHARBUF) */
-			res = val_to_ring(args, 0, 0, true, 0);
-			CHECK_RES(res);
-			break;
+				/* Parameter 6: value_charbuf (type: PT_CHARBUF) */
+				res = val_to_ring(args, 0, 0, true, 0);
+				CHECK_RES(res);
+				break;
 
-		default:
+			default:
 
-			/* Parameter 5: value_bytebuf (type: PT_BYTEBUF) */
-			res = val_to_ring(args, 0, 0, true, 0);
-			CHECK_RES(res);
+				/* Parameter 5: value_bytebuf (type: PT_BYTEBUF) */
+				res = val_to_ring(args, 0, 0, true, 0);
+				CHECK_RES(res);
 
-			/* Parameter 6: value_charbuf (type: PT_CHARBUF) */
-			res = val_to_ring(args, 0, 0, true, 0);
-			CHECK_RES(res);
-			break;
+				/* Parameter 6: value_charbuf (type: PT_CHARBUF) */
+				res = val_to_ring(args, 0, 0, true, 0);
+				CHECK_RES(res);
+				break;
 		}
 	}
 
@@ -5941,14 +5962,14 @@ static pid_t find_alive_thread(struct task_struct *father)
 #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0)
 	while_each_thread(father, t) {
 #else /* Kernel 3.19.0 switched to `for_each_thread` macro */
-	for_each_thread(father, t) {
+		for_each_thread(father, t) {
 #endif /* LINUX_VERSION_CODE < KERNEL_VERSION(3, 19, 0) */
-		/* We add an extra check here for `t != NULL` just to be sure */
-		if (t != NULL && (!(t->flags & PF_EXITING)))
-			return t->pid;
+			/* We add an extra check here for `t != NULL` just to be sure */
+			if (t != NULL && (!(t->flags & PF_EXITING)))
+				return t->pid;
+		}
+		return 0;
 	}
-	return 0;
-}
 
 /* When we die, we re-parent all our children, and try to:
  * 1. give them to another thread in our thread group, if such a member exists
@@ -5956,1609 +5977,1609 @@ static pid_t find_alive_thread(struct task_struct *father)
  *    child_subreaper for its children (like a service manager)
  * 3. give it to the init process (PID 1) in our pid namespace
  */
-static pid_t find_new_reaper_pid(struct task_struct *father)
-{
-	struct task_struct *possible_reaper;
-	/* This is the namespace level of the thread that is dying, we will
-	 * use it to check that the reaper will be always in the same namespace.
-	 */
-	unsigned int father_ns_level = task_pid(father)->level;
-	/* This is the reaper of that namespace */
-	struct task_struct *child_ns_reaper = task_active_pid_ns(father)->child_reaper;
-	/* Search an alive thread in the same thread group */
-	pid_t reaper_pid = find_alive_thread(father);
-
-	/* If `reaper_pid!=0` when we found an alive thread, that's enough */
-	if(reaper_pid != 0)
+	static pid_t find_new_reaper_pid(struct task_struct *father)
 	{
-		return reaper_pid;
-	}
-
-	/* There could be a strange case in which the actual thread is the init one
-	 * and we have no other threads in the same thread group, so the whole init group is dying.
-	 * The kernel will destroy all the processes in that namespace. We send a reaper equal to
-	 * `0` in userspace.
-	 */
-	if(child_ns_reaper == father)
-	{
-		return 0;
-	}
-
-	/* If there are no sub reapers the reaper is the init process of that namespace */
-	if(!father->signal->has_child_subreaper)
-	{
-		return child_ns_reaper->pid;
-	}
-
-	/* If we fall here it means we have some sub_reapers.
-	 * Find the first ->is_child_subreaper ancestor in our pid_ns.
-	 * We can't check reaper != child_reaper to ensure we do not
-	 * cross the namespaces, the exiting parent could be injected
-	 * by setns() + fork().
-	 * We check pid->level, this is slightly more efficient than
-	 * task_active_pid_ns(reaper) != task_active_pid_ns(father).
-	 */
-	for(possible_reaper = father->real_parent;
-		task_pid(possible_reaper)->level == father_ns_level;
-		possible_reaper = possible_reaper->real_parent)
-	{
-		/* Here we could also check for child_ns_reaper
-		 * but the kernel checks against init_task, so we are fine.
+		struct task_struct *possible_reaper;
+		/* This is the namespace level of the thread that is dying, we will
+		 * use it to check that the reaper will be always in the same namespace.
 		 */
-		if(possible_reaper == &init_task)
-		{
-			return child_ns_reaper->pid;
-		}
+		unsigned int father_ns_level = task_pid(father)->level;
+		/* This is the reaper of that namespace */
+		struct task_struct *child_ns_reaper = task_active_pid_ns(father)->child_reaper;
+		/* Search an alive thread in the same thread group */
+		pid_t reaper_pid = find_alive_thread(father);
 
-		if(!possible_reaper->signal->is_child_subreaper)
-		{
-			continue;
-		}
-
-		reaper_pid = find_alive_thread(possible_reaper);
+		/* If `reaper_pid!=0` when we found an alive thread, that's enough */
 		if(reaper_pid != 0)
 		{
 			return reaper_pid;
 		}
-	}
 
-	return child_ns_reaper->pid;
-}
+		/* There could be a strange case in which the actual thread is the init one
+		 * and we have no other threads in the same thread group, so the whole init group is dying.
+		 * The kernel will destroy all the processes in that namespace. We send a reaper equal to
+		 * `0` in userspace.
+		 */
+		if(child_ns_reaper == father)
+		{
+			return 0;
+		}
+
+		/* If there are no sub reapers the reaper is the init process of that namespace */
+		if(!father->signal->has_child_subreaper)
+		{
+			return child_ns_reaper->pid;
+		}
+
+		/* If we fall here it means we have some sub_reapers.
+		 * Find the first ->is_child_subreaper ancestor in our pid_ns.
+		 * We can't check reaper != child_reaper to ensure we do not
+		 * cross the namespaces, the exiting parent could be injected
+		 * by setns() + fork().
+		 * We check pid->level, this is slightly more efficient than
+		 * task_active_pid_ns(reaper) != task_active_pid_ns(father).
+		 */
+		for(possible_reaper = father->real_parent;
+			task_pid(possible_reaper)->level == father_ns_level;
+			possible_reaper = possible_reaper->real_parent)
+		{
+			/* Here we could also check for child_ns_reaper
+			 * but the kernel checks against init_task, so we are fine.
+			 */
+			if(possible_reaper == &init_task)
+			{
+				return child_ns_reaper->pid;
+			}
+
+			if(!possible_reaper->signal->is_child_subreaper)
+			{
+				continue;
+			}
+
+			reaper_pid = find_alive_thread(possible_reaper);
+			if(reaper_pid != 0)
+			{
+				return reaper_pid;
+			}
+		}
+
+		return child_ns_reaper->pid;
+	}
 #else
 
-static pid_t find_new_reaper_pid(struct task_struct *father)
-{
-	return -1;
-}
+	static pid_t find_new_reaper_pid(struct task_struct *father)
+	{
+		return -1;
+	}
 
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0) */
 
 
-int f_sys_procexit_e(struct event_filler_arguments *args)
-{
-	int res;
-
-	pid_t reaper_pid = 0;
-
-	if (args->sched_prev == NULL) {
-		ASSERT(false);
-		return -1;
-	}
-
-	/* Parameter 1: status (type: PT_ERRNO) */
-	res = val_to_ring(args, args->sched_prev->exit_code, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: ret (type: PT_ERRNO) */
-	res = val_to_ring(args, __WEXITSTATUS(args->sched_prev->exit_code), 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 3: sig (type: PT_SIGTYPE) */
-	/* If signaled -> signum, else 0 */
-	if (__WIFSIGNALED(args->sched_prev->exit_code))
+	int f_sys_procexit_e(struct event_filler_arguments *args)
 	{
-		res = val_to_ring(args, __WTERMSIG(args->sched_prev->exit_code), 0, false, 0);
-	} else {
-		res = val_to_ring(args, 0, 0, false, 0);
-	}
-	CHECK_RES(res);
+		int res;
 
-	/* Parameter 4: core (type: PT_UINT8) */
-	res = val_to_ring(args, __WCOREDUMP(args->sched_prev->exit_code) != 0, 0, false, 0);
-	CHECK_RES(res);
+		pid_t reaper_pid = 0;
 
-	/* Parameter 5: reaper_tid (type: PT_PID) */
-	/* This is a sort of optimization if this thread has no children in the kernel
-	 * we don't need a reaper and we can save some precious cycles.
-	 * We send `reaper_pid==0` if the userspace still has some children
-	 * it will manage them with its userspace logic.
-	 */
-	if(!list_empty(&current->children))
-	{
-		/* We have at least one child, so we need a reaper for it */
-		reaper_pid = find_new_reaper_pid(current);
-	}
-	res = val_to_ring(args, (int64_t)reaper_pid, 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_sendfile_e(struct event_filler_arguments *args)
-{
-	unsigned long val = 0;
-	int res = 0;
-	off_t offset = 0;
-	int32_t out_fd = 0;
-	int32_t in_fd = 0;
-
-	/* Parameter 1: out_fd (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	out_fd = (int32_t)val;
-	res = val_to_ring(args, (int64_t)out_fd, 0, true, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: in_fd (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	in_fd = (int32_t)val;
-	res = val_to_ring(args, (int64_t)in_fd, 0, true, 0);
-	CHECK_RES(res);
-
-
-	/* Parameter 3: offset (type: PT_UINT64) */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-
-	if (val != 0) {
-#ifdef CONFIG_COMPAT
-		if (!args->compat) {
-#endif
-			res = ppm_copy_from_user(&offset, (void *)val, sizeof(off_t));
-#ifdef CONFIG_COMPAT
-		} else {
-			res = ppm_copy_from_user(&offset, (void *)compat_ptr(val), sizeof(compat_off_t));
+		if (args->sched_prev == NULL) {
+			ASSERT(false);
+			return -1;
 		}
-#endif
-		if (unlikely(res))
-			val = 0;
-		else
-			val = offset;
-	}
 
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
+		/* Parameter 1: status (type: PT_ERRNO) */
+		res = val_to_ring(args, args->sched_prev->exit_code, 0, false, 0);
+		CHECK_RES(res);
 
-	/* Parameter 4: size (type: PT_UINT64) */
-	syscall_get_arguments_deprecated(args, 3, 1, &val);
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
+		/* Parameter 2: ret (type: PT_ERRNO) */
+		res = val_to_ring(args, __WEXITSTATUS(args->sched_prev->exit_code), 0, false, 0);
+		CHECK_RES(res);
 
-	return add_sentinel(args);
-}
-
-int f_sys_sendfile_x(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-	int64_t retval;
-	off_t offset;
-
-	/*
-	 * res
-	 */
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/*
-	 * offset
-	 */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-
-	if (val != 0) {
-#ifdef CONFIG_COMPAT
-		if (!args->compat) {
-#endif
-			res = ppm_copy_from_user(&offset, (void *)val, sizeof(off_t));
-#ifdef CONFIG_COMPAT
+		/* Parameter 3: sig (type: PT_SIGTYPE) */
+		/* If signaled -> signum, else 0 */
+		if (__WIFSIGNALED(args->sched_prev->exit_code))
+		{
+			res = val_to_ring(args, __WTERMSIG(args->sched_prev->exit_code), 0, false, 0);
 		} else {
-			res = ppm_copy_from_user(&offset, (void *)compat_ptr(val), sizeof(compat_off_t));
+			res = val_to_ring(args, 0, 0, false, 0);
 		}
+		CHECK_RES(res);
+
+		/* Parameter 4: core (type: PT_UINT8) */
+		res = val_to_ring(args, __WCOREDUMP(args->sched_prev->exit_code) != 0, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 5: reaper_tid (type: PT_PID) */
+		/* This is a sort of optimization if this thread has no children in the kernel
+		 * we don't need a reaper and we can save some precious cycles.
+		 * We send `reaper_pid==0` if the userspace still has some children
+		 * it will manage them with its userspace logic.
+		 */
+		if(!list_empty(&current->children))
+		{
+			/* We have at least one child, so we need a reaper for it */
+			reaper_pid = find_new_reaper_pid(current);
+		}
+		res = val_to_ring(args, (int64_t)reaper_pid, 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_sendfile_e(struct event_filler_arguments *args)
+	{
+		unsigned long val = 0;
+		int res = 0;
+		off_t offset = 0;
+		int32_t out_fd = 0;
+		int32_t in_fd = 0;
+
+		/* Parameter 1: out_fd (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		out_fd = (int32_t)val;
+		res = val_to_ring(args, (int64_t)out_fd, 0, true, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: in_fd (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		in_fd = (int32_t)val;
+		res = val_to_ring(args, (int64_t)in_fd, 0, true, 0);
+		CHECK_RES(res);
+
+
+		/* Parameter 3: offset (type: PT_UINT64) */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
+
+		if (val != 0) {
+#ifdef CONFIG_COMPAT
+			if (!args->compat) {
 #endif
-		if (unlikely(res))
-			val = 0;
-		else
-			val = offset;
-	}
+				res = ppm_copy_from_user(&offset, (void *)val, sizeof(off_t));
+#ifdef CONFIG_COMPAT
+			} else {
+				res = ppm_copy_from_user(&offset, (void *)compat_ptr(val), sizeof(compat_off_t));
+			}
+#endif
+			if (unlikely(res))
+				val = 0;
+			else
+				val = offset;
+		}
 
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_quotactl_e(struct event_filler_arguments *args)
-{
-	unsigned long val = 0;
-	int res = 0;
-	uint32_t id = 0;
-	uint8_t quota_fmt = 0;
-	uint32_t cmd = 0;
-	uint16_t scap_cmd = 0;
-
-	/* Parameter 1: cmd (type: PT_FLAGS16) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	cmd = (uint32_t)val;
-	scap_cmd = quotactl_cmd_to_scap(cmd);
-	res = val_to_ring(args, scap_cmd, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: type (type: PT_FLAGS8) */
-	res = val_to_ring(args, quotactl_type_to_scap(cmd), 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 3: id (type: PT_UINT32) */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-	id = (uint32_t)val;
-	if ((scap_cmd != PPM_Q_GETQUOTA) &&
-		 (scap_cmd != PPM_Q_SETQUOTA) &&
-		 (scap_cmd != PPM_Q_XGETQUOTA) &&
-		 (scap_cmd != PPM_Q_XSETQLIM))
-	{
-		/* In this case `id` don't represent a `userid` or a `groupid` */
-		res = val_to_ring(args, 0, 0, false, 0);
-	}
-	else
-	{
-		res = val_to_ring(args, id, 0, false, 0);
-	}
-	CHECK_RES(res);
-
-	/* Parameter 4: quota_fmt (type: PT_FLAGS8) */
-	quota_fmt = PPM_QFMT_NOT_USED;
-	if(scap_cmd == PPM_Q_QUOTAON)
-	{
-		quota_fmt = quotactl_fmt_to_scap(id);
-	}
-	res = val_to_ring(args, quota_fmt, 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_quotactl_x(struct event_filler_arguments *args)
-{
-	unsigned long val, len;
-	int res;
-	int64_t retval;
-	uint16_t cmd;
-	struct if_dqblk dqblk;
-	struct if_dqinfo dqinfo;
-	uint32_t quota_fmt_out;
-
-	/*
-	 * extract cmd
-	 */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	cmd = quotactl_cmd_to_scap(val);
-
-	/*
-	 * return value
-	 */
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/*
-	 * Add special
-	 */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	/*
-	 * get addr
-	 */
-	syscall_get_arguments_deprecated(args, 3, 1, &val);
-
-	/*
-	 * get quotafilepath only for QUOTAON
-	 */
-	if (cmd == PPM_Q_QUOTAON)
 		res = val_to_ring(args, val, 0, true, 0);
-	else
-		res = val_to_ring(args, 0, 0, false, 0);
+		CHECK_RES(res);
 
-	CHECK_RES(res);
+		/* Parameter 4: size (type: PT_UINT64) */
+		syscall_get_arguments_deprecated(args, 3, 1, &val);
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
 
-
-	/*
-	 * dqblk fields if present
-	 */
-	dqblk.dqb_valid = 0;
-	if ((cmd == PPM_Q_GETQUOTA) || (cmd == PPM_Q_SETQUOTA)) {
-		len = ppm_copy_from_user(&dqblk, (void *)val, sizeof(struct if_dqblk));
-		if (unlikely(len != 0))
-			return PPM_FAILURE_INVALID_USER_MEMORY;
-	}
-	if (dqblk.dqb_valid & QIF_BLIMITS) {
-		res = val_to_ring(args, dqblk.dqb_bhardlimit, 0, false, 0);
-		CHECK_RES(res);
-		res = val_to_ring(args, dqblk.dqb_bsoftlimit, 0, false, 0);
-		CHECK_RES(res);
-	} else {
-		res = val_to_ring(args, 0, 0, false, 0);
-		CHECK_RES(res);
-		res = val_to_ring(args, 0, 0, false, 0);
-		CHECK_RES(res);
+		return add_sentinel(args);
 	}
 
-	if (dqblk.dqb_valid & QIF_SPACE) {
-		res = val_to_ring(args, dqblk.dqb_curspace, 0, false, 0);
-		CHECK_RES(res);
-	} else {
-		res = val_to_ring(args, 0, 0, false, 0);
-		CHECK_RES(res);
-	}
+	int f_sys_sendfile_x(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int res;
+		int64_t retval;
+		off_t offset;
 
-	if (dqblk.dqb_valid & QIF_ILIMITS) {
-		res = val_to_ring(args, dqblk.dqb_ihardlimit, 0, false, 0);
+		/*
+		 * res
+		 */
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
 		CHECK_RES(res);
-		res = val_to_ring(args, dqblk.dqb_isoftlimit, 0, false, 0);
-		CHECK_RES(res);
-	} else {
-		res = val_to_ring(args, 0, 0, false, 0);
-		CHECK_RES(res);
-		res = val_to_ring(args, 0, 0, false, 0);
-		CHECK_RES(res);
-	}
 
-	if (dqblk.dqb_valid & QIF_BTIME) {
-		res = val_to_ring(args, dqblk.dqb_btime, 0, false, 0);
-		CHECK_RES(res);
-	} else {
-		res = val_to_ring(args, 0, 0, false, 0);
-		CHECK_RES(res);
-	}
+		/*
+		 * offset
+		 */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
 
-	if (dqblk.dqb_valid & QIF_ITIME) {
-		res = val_to_ring(args, dqblk.dqb_itime, 0, false, 0);
-		CHECK_RES(res);
-	} else {
-		res = val_to_ring(args, 0, 0, false, 0);
-		CHECK_RES(res);
-	}
-
-	/*
-	 * dqinfo fields if present
-	 */
-	dqinfo.dqi_valid = 0;
-	if ((cmd == PPM_Q_GETINFO) || (cmd == PPM_Q_SETINFO)) {
-		len = ppm_copy_from_user(&dqinfo, (void *)val, sizeof(struct if_dqinfo));
-		if (unlikely(len != 0))
-			return PPM_FAILURE_INVALID_USER_MEMORY;
-	}
-
-	if (dqinfo.dqi_valid & IIF_BGRACE) {
-		res = val_to_ring(args, dqinfo.dqi_bgrace, 0, false, 0);
-		CHECK_RES(res);
-	} else {
-		res = val_to_ring(args, 0, 0, false, 0);
-		CHECK_RES(res);
-	}
-
-	if (dqinfo.dqi_valid & IIF_IGRACE) {
-		res = val_to_ring(args, dqinfo.dqi_igrace, 0, false, 0);
-		CHECK_RES(res);
-	} else {
-		res = val_to_ring(args, 0, 0, false, 0);
-		CHECK_RES(res);
-	}
-
-	if (dqinfo.dqi_valid & IIF_FLAGS) {
-		res = val_to_ring(args, dqinfo.dqi_flags, 0, false, 0);
-		CHECK_RES(res);
-	} else {
-		res = val_to_ring(args, 0, 0, false, 0);
-		CHECK_RES(res);
-	}
-
-	quota_fmt_out = PPM_QFMT_NOT_USED;
-	if (cmd == PPM_Q_GETFMT) {
-		len = ppm_copy_from_user(&quota_fmt_out, (void *)val, sizeof(uint32_t));
-		if (unlikely(len != 0))
-			return PPM_FAILURE_INVALID_USER_MEMORY;
-		quota_fmt_out = quotactl_fmt_to_scap(quota_fmt_out);
-	}
-	res = val_to_ring(args, quota_fmt_out, 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_scapevent_e(struct event_filler_arguments *args)
-{
-	int res;
-
-	/*
-	 * event_type
-	 */
-	res = val_to_ring(args, (unsigned long)args->sched_prev, 0, false, 0);
-	CHECK_RES(res);
-
-	/*
-	 * event_data
-	 */
-	res = val_to_ring(args, (unsigned long)args->sched_next, 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_getresuid_and_gid_x(struct event_filler_arguments *args)
-{
-	int res;
-	unsigned long val, len;
-	uint32_t uid;
-	int16_t retval;
-
-	/*
-	 * return value
-	 */
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/*
-	 * ruid
-	 */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
+		if (val != 0) {
 #ifdef CONFIG_COMPAT
-	if (!args->compat) {
+			if (!args->compat) {
 #endif
+				res = ppm_copy_from_user(&offset, (void *)val, sizeof(off_t));
+#ifdef CONFIG_COMPAT
+			} else {
+				res = ppm_copy_from_user(&offset, (void *)compat_ptr(val), sizeof(compat_off_t));
+			}
+#endif
+			if (unlikely(res))
+				val = 0;
+			else
+				val = offset;
+		}
+
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_quotactl_e(struct event_filler_arguments *args)
+	{
+		unsigned long val = 0;
+		int res = 0;
+		uint32_t id = 0;
+		uint8_t quota_fmt = 0;
+		uint32_t cmd = 0;
+		uint16_t scap_cmd = 0;
+
+		/* Parameter 1: cmd (type: PT_FLAGS16) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		cmd = (uint32_t)val;
+		scap_cmd = quotactl_cmd_to_scap(cmd);
+		res = val_to_ring(args, scap_cmd, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: type (type: PT_FLAGS8) */
+		res = val_to_ring(args, quotactl_type_to_scap(cmd), 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 3: id (type: PT_UINT32) */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
+		id = (uint32_t)val;
+		if ((scap_cmd != PPM_Q_GETQUOTA) &&
+			(scap_cmd != PPM_Q_SETQUOTA) &&
+			(scap_cmd != PPM_Q_XGETQUOTA) &&
+			(scap_cmd != PPM_Q_XSETQLIM))
+		{
+			/* In this case `id` don't represent a `userid` or a `groupid` */
+			res = val_to_ring(args, 0, 0, false, 0);
+		}
+		else
+		{
+			res = val_to_ring(args, id, 0, false, 0);
+		}
+		CHECK_RES(res);
+
+		/* Parameter 4: quota_fmt (type: PT_FLAGS8) */
+		quota_fmt = PPM_QFMT_NOT_USED;
+		if(scap_cmd == PPM_Q_QUOTAON)
+		{
+			quota_fmt = quotactl_fmt_to_scap(id);
+		}
+		res = val_to_ring(args, quota_fmt, 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_quotactl_x(struct event_filler_arguments *args)
+	{
+		unsigned long val, len;
+		int res;
+		int64_t retval;
+		uint16_t cmd;
+		struct if_dqblk dqblk;
+		struct if_dqinfo dqinfo;
+		uint32_t quota_fmt_out;
+
+		/*
+		 * extract cmd
+		 */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		cmd = quotactl_cmd_to_scap(val);
+
+		/*
+		 * return value
+		 */
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/*
+		 * Add special
+		 */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		/*
+		 * get addr
+		 */
+		syscall_get_arguments_deprecated(args, 3, 1, &val);
+
+		/*
+		 * get quotafilepath only for QUOTAON
+		 */
+		if (cmd == PPM_Q_QUOTAON)
+			res = val_to_ring(args, val, 0, true, 0);
+		else
+			res = val_to_ring(args, 0, 0, false, 0);
+
+		CHECK_RES(res);
+
+
+		/*
+		 * dqblk fields if present
+		 */
+		dqblk.dqb_valid = 0;
+		if ((cmd == PPM_Q_GETQUOTA) || (cmd == PPM_Q_SETQUOTA)) {
+			len = ppm_copy_from_user(&dqblk, (void *)val, sizeof(struct if_dqblk));
+			if (unlikely(len != 0))
+				return PPM_FAILURE_INVALID_USER_MEMORY;
+		}
+		if (dqblk.dqb_valid & QIF_BLIMITS) {
+			res = val_to_ring(args, dqblk.dqb_bhardlimit, 0, false, 0);
+			CHECK_RES(res);
+			res = val_to_ring(args, dqblk.dqb_bsoftlimit, 0, false, 0);
+			CHECK_RES(res);
+		} else {
+			res = val_to_ring(args, 0, 0, false, 0);
+			CHECK_RES(res);
+			res = val_to_ring(args, 0, 0, false, 0);
+			CHECK_RES(res);
+		}
+
+		if (dqblk.dqb_valid & QIF_SPACE) {
+			res = val_to_ring(args, dqblk.dqb_curspace, 0, false, 0);
+			CHECK_RES(res);
+		} else {
+			res = val_to_ring(args, 0, 0, false, 0);
+			CHECK_RES(res);
+		}
+
+		if (dqblk.dqb_valid & QIF_ILIMITS) {
+			res = val_to_ring(args, dqblk.dqb_ihardlimit, 0, false, 0);
+			CHECK_RES(res);
+			res = val_to_ring(args, dqblk.dqb_isoftlimit, 0, false, 0);
+			CHECK_RES(res);
+		} else {
+			res = val_to_ring(args, 0, 0, false, 0);
+			CHECK_RES(res);
+			res = val_to_ring(args, 0, 0, false, 0);
+			CHECK_RES(res);
+		}
+
+		if (dqblk.dqb_valid & QIF_BTIME) {
+			res = val_to_ring(args, dqblk.dqb_btime, 0, false, 0);
+			CHECK_RES(res);
+		} else {
+			res = val_to_ring(args, 0, 0, false, 0);
+			CHECK_RES(res);
+		}
+
+		if (dqblk.dqb_valid & QIF_ITIME) {
+			res = val_to_ring(args, dqblk.dqb_itime, 0, false, 0);
+			CHECK_RES(res);
+		} else {
+			res = val_to_ring(args, 0, 0, false, 0);
+			CHECK_RES(res);
+		}
+
+		/*
+		 * dqinfo fields if present
+		 */
+		dqinfo.dqi_valid = 0;
+		if ((cmd == PPM_Q_GETINFO) || (cmd == PPM_Q_SETINFO)) {
+			len = ppm_copy_from_user(&dqinfo, (void *)val, sizeof(struct if_dqinfo));
+			if (unlikely(len != 0))
+				return PPM_FAILURE_INVALID_USER_MEMORY;
+		}
+
+		if (dqinfo.dqi_valid & IIF_BGRACE) {
+			res = val_to_ring(args, dqinfo.dqi_bgrace, 0, false, 0);
+			CHECK_RES(res);
+		} else {
+			res = val_to_ring(args, 0, 0, false, 0);
+			CHECK_RES(res);
+		}
+
+		if (dqinfo.dqi_valid & IIF_IGRACE) {
+			res = val_to_ring(args, dqinfo.dqi_igrace, 0, false, 0);
+			CHECK_RES(res);
+		} else {
+			res = val_to_ring(args, 0, 0, false, 0);
+			CHECK_RES(res);
+		}
+
+		if (dqinfo.dqi_valid & IIF_FLAGS) {
+			res = val_to_ring(args, dqinfo.dqi_flags, 0, false, 0);
+			CHECK_RES(res);
+		} else {
+			res = val_to_ring(args, 0, 0, false, 0);
+			CHECK_RES(res);
+		}
+
+		quota_fmt_out = PPM_QFMT_NOT_USED;
+		if (cmd == PPM_Q_GETFMT) {
+			len = ppm_copy_from_user(&quota_fmt_out, (void *)val, sizeof(uint32_t));
+			if (unlikely(len != 0))
+				return PPM_FAILURE_INVALID_USER_MEMORY;
+			quota_fmt_out = quotactl_fmt_to_scap(quota_fmt_out);
+		}
+		res = val_to_ring(args, quota_fmt_out, 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_scapevent_e(struct event_filler_arguments *args)
+	{
+		int res;
+
+		/*
+		 * event_type
+		 */
+		res = val_to_ring(args, (unsigned long)args->sched_prev, 0, false, 0);
+		CHECK_RES(res);
+
+		/*
+		 * event_data
+		 */
+		res = val_to_ring(args, (unsigned long)args->sched_next, 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_getresuid_and_gid_x(struct event_filler_arguments *args)
+	{
+		int res;
+		unsigned long val, len;
+		uint32_t uid;
+		int16_t retval;
+
+		/*
+		 * return value
+		 */
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/*
+		 * ruid
+		 */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+#ifdef CONFIG_COMPAT
+		if (!args->compat) {
+#endif
+			len = ppm_copy_from_user(&uid, (void *)val, sizeof(uint32_t));
+#ifdef CONFIG_COMPAT
+		} else {
+			len = ppm_copy_from_user(&uid, (void *)compat_ptr(val), sizeof(uint32_t));
+		}
+#endif
+		if (unlikely(len != 0))
+			return PPM_FAILURE_INVALID_USER_MEMORY;
+
+		res = val_to_ring(args, uid, 0, false, 0);
+		CHECK_RES(res);
+
+		/*
+		 * euid
+		 */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
 		len = ppm_copy_from_user(&uid, (void *)val, sizeof(uint32_t));
-#ifdef CONFIG_COMPAT
-	} else {
-		len = ppm_copy_from_user(&uid, (void *)compat_ptr(val), sizeof(uint32_t));
+		if (unlikely(len != 0))
+			return PPM_FAILURE_INVALID_USER_MEMORY;
+
+		res = val_to_ring(args, uid, 0, false, 0);
+		CHECK_RES(res);
+
+		/*
+		 * suid
+		 */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
+		len = ppm_copy_from_user(&uid, (void *)val, sizeof(uint32_t));
+		if (unlikely(len != 0))
+			return PPM_FAILURE_INVALID_USER_MEMORY;
+
+		res = val_to_ring(args, uid, 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
 	}
-#endif
-	if (unlikely(len != 0))
-		return PPM_FAILURE_INVALID_USER_MEMORY;
 
-	res = val_to_ring(args, uid, 0, false, 0);
-	CHECK_RES(res);
+	int f_sys_flock_e(struct event_filler_arguments *args)
+	{
+		unsigned long val = 0;
+		int res = 0;
+		uint32_t flags = 0;
+		int32_t fd = 0;
 
-	/*
-	 * euid
-	 */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	len = ppm_copy_from_user(&uid, (void *)val, sizeof(uint32_t));
-	if (unlikely(len != 0))
-		return PPM_FAILURE_INVALID_USER_MEMORY;
+		/* Parameter 1: fd (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		fd = (int32_t)val;
+		res = val_to_ring(args, (int64_t)fd, 0, false, 0);
+		CHECK_RES(res);
 
-	res = val_to_ring(args, uid, 0, false, 0);
-	CHECK_RES(res);
+		/* Parameter 2: operation (type: PT_FLAGS32) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		flags = flock_flags_to_scap((int) val);
+		res = val_to_ring(args, flags, 0, false, 0);
+		CHECK_RES(res);
 
-	/*
-	 * suid
-	 */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-	len = ppm_copy_from_user(&uid, (void *)val, sizeof(uint32_t));
-	if (unlikely(len != 0))
-		return PPM_FAILURE_INVALID_USER_MEMORY;
+		return add_sentinel(args);
+	}
 
-	res = val_to_ring(args, uid, 0, false, 0);
-	CHECK_RES(res);
+	int f_sys_ioctl_e(struct event_filler_arguments *args)
+	{
+		unsigned long val = 0;
+		int res = 0;
+		int32_t fd = 0;
 
-	return add_sentinel(args);
-}
+		/* Parameter 1: fd (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		fd = (int32_t)val;
+		res = val_to_ring(args, (int64_t)fd, 0, false, 0);
+		CHECK_RES(res);
 
-int f_sys_flock_e(struct event_filler_arguments *args)
-{
-	unsigned long val = 0;
-	int res = 0;
-	uint32_t flags = 0;
-	int32_t fd = 0;
+		/* Parameter 2: request (type: PT_UINT64) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		res = val_to_ring(args, val, 0, false, 0);
+		CHECK_RES(res);
 
-	/* Parameter 1: fd (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	fd = (int32_t)val;
-	res = val_to_ring(args, (int64_t)fd, 0, false, 0);
-	CHECK_RES(res);
+		/* Parameter 3: argument (type: PT_UINT64) */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
+		res = val_to_ring(args, val, 0, false, 0);
+		CHECK_RES(res);
 
-	/* Parameter 2: operation (type: PT_FLAGS32) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	flags = flock_flags_to_scap((int) val);
-	res = val_to_ring(args, flags, 0, false, 0);
-	CHECK_RES(res);
+		return add_sentinel(args);
+	}
 
-	return add_sentinel(args);
-}
+	int f_sys_mkdir_e(struct event_filler_arguments *args)
+	{
+		unsigned long val = 0;
+		int res = 0;
 
-int f_sys_ioctl_e(struct event_filler_arguments *args)
-{
-	unsigned long val = 0;
-	int res = 0;
-	int32_t fd = 0;
+		/* Parameter 1: mode (type: PT_UINT32) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		res = val_to_ring(args, val, 0, false, 0);
+		CHECK_RES(res);
 
-	/* Parameter 1: fd (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	fd = (int32_t)val;
-	res = val_to_ring(args, (int64_t)fd, 0, false, 0);
-	CHECK_RES(res);
+		return add_sentinel(args);
+	}
 
-	/* Parameter 2: request (type: PT_UINT64) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	res = val_to_ring(args, val, 0, false, 0);
-	CHECK_RES(res);
+	int f_sys_setns_e(struct event_filler_arguments *args)
+	{
+		unsigned long val = 0;
+		int res = 0;
+		int32_t fd = 0;
 
-	/* Parameter 3: argument (type: PT_UINT64) */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-	res = val_to_ring(args, val, 0, false, 0);
-	CHECK_RES(res);
+		/* Parameter 1: fd (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		fd = (int32_t)val;
+		res = val_to_ring(args, (int64_t)fd, 0, true, 0);
+		CHECK_RES(res);
 
-	return add_sentinel(args);
-}
+		/* Parameter 2: nstype (type: PT_FLAGS32) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		res = val_to_ring(args, clone_flags_to_scap((int) val), 0, true, 0);
+		CHECK_RES(res);
 
-int f_sys_mkdir_e(struct event_filler_arguments *args)
-{
-	unsigned long val = 0;
-	int res = 0;
+		return add_sentinel(args);
+	}
 
-	/* Parameter 1: mode (type: PT_UINT32) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	res = val_to_ring(args, val, 0, false, 0);
-	CHECK_RES(res);
+	int f_sys_setpgid_e(struct event_filler_arguments *args)
+	{
+		unsigned long val = 0;
+		int res = 0;
+		pid_t pid = 0;
+		pid_t pgid = 0;
 
-	return add_sentinel(args);
-}
+		/* Parameter 1: pid (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		pid = (int32_t)val;
+		res = val_to_ring(args, (int64_t)pid, 0, true, 0);
+		CHECK_RES(res);
 
-int f_sys_setns_e(struct event_filler_arguments *args)
-{
-	unsigned long val = 0;
-	int res = 0;
-	int32_t fd = 0;
+		/* Parameter 2: pgid (type: PT_PID) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		pgid = (int32_t)val;
+		res = val_to_ring(args, (int64_t)pgid, 0, true, 0);
+		CHECK_RES(res);
 
-	/* Parameter 1: fd (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	fd = (int32_t)val;
-	res = val_to_ring(args, (int64_t)fd, 0, true, 0);
-	CHECK_RES(res);
+		return add_sentinel(args);
+	}
 
-	/* Parameter 2: nstype (type: PT_FLAGS32) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	res = val_to_ring(args, clone_flags_to_scap((int) val), 0, true, 0);
-	CHECK_RES(res);
+	int f_sys_unshare_e(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int res;
+		uint32_t flags;
 
-	return add_sentinel(args);
-}
+		/*
+		 * get type, parse as clone flags as it's a subset of it
+		 */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		flags = clone_flags_to_scap((int) val);
+		res = val_to_ring(args, flags, 0, true, 0);
+		CHECK_RES(res);
 
-int f_sys_setpgid_e(struct event_filler_arguments *args)
-{
-	unsigned long val = 0;
-	int res = 0;
-	pid_t pid = 0;
-	pid_t pgid = 0;
-
-	/* Parameter 1: pid (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	pid = (int32_t)val;
-	res = val_to_ring(args, (int64_t)pid, 0, true, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: pgid (type: PT_PID) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	pgid = (int32_t)val;
-	res = val_to_ring(args, (int64_t)pgid, 0, true, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_unshare_e(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-	uint32_t flags;
-
-	/*
-	 * get type, parse as clone flags as it's a subset of it
-	 */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	flags = clone_flags_to_scap((int) val);
-	res = val_to_ring(args, flags, 0, true, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
+		return add_sentinel(args);
+	}
 
 #ifdef CAPTURE_SIGNAL_DELIVERIES
-int f_sys_signaldeliver_e(struct event_filler_arguments *args)
-{
-	int res;
+	int f_sys_signaldeliver_e(struct event_filler_arguments *args)
+	{
+		int res;
 
-	/*
-	 * source pid
-	 */
-	res = val_to_ring(args, args->spid, 0, false, 0);
-	CHECK_RES(res);
+		/*
+		 * source pid
+		 */
+		res = val_to_ring(args, args->spid, 0, false, 0);
+		CHECK_RES(res);
 
-	/*
-	 * destination pid
-	 */
-	res = val_to_ring(args, args->dpid, 0, false, 0);
-	CHECK_RES(res);
+		/*
+		 * destination pid
+		 */
+		res = val_to_ring(args, args->dpid, 0, false, 0);
+		CHECK_RES(res);
 
-	/*
-	 * signal number
-	 */
-	res = val_to_ring(args, args->signo, 0, false, 0);
-	CHECK_RES(res);
+		/*
+		 * signal number
+		 */
+		res = val_to_ring(args, args->signo, 0, false, 0);
+		CHECK_RES(res);
 
-	return add_sentinel(args);
-}
+		return add_sentinel(args);
+	}
 #endif
 
 #ifdef CAPTURE_PAGE_FAULTS
-int f_sys_pagefault_e(struct event_filler_arguments *args)
-{
-	int res;
+	int f_sys_pagefault_e(struct event_filler_arguments *args)
+	{
+		int res;
 
-	res = val_to_ring(args, args->fault_data.address, 0, false, 0);
-	CHECK_RES(res);
+		res = val_to_ring(args, args->fault_data.address, 0, false, 0);
+		CHECK_RES(res);
 
-	res = val_to_ring(args, args->fault_data.regs->ip, 0, false, 0);
-	CHECK_RES(res);
+		res = val_to_ring(args, args->fault_data.regs->ip, 0, false, 0);
+		CHECK_RES(res);
 
-	res = val_to_ring(args, pf_flags_to_scap(args->fault_data.error_code), 0, false, 0);
-	CHECK_RES(res);
+		res = val_to_ring(args, pf_flags_to_scap(args->fault_data.error_code), 0, false, 0);
+		CHECK_RES(res);
 
-	return add_sentinel(args);
-}
+		return add_sentinel(args);
+	}
 #endif
 
-int f_cpu_hotplug_e(struct event_filler_arguments *args)
-{
-	int res;
-
-	/*
-	 * cpu
-	 */
-	res = val_to_ring(args, (uint64_t)args->sched_prev, 0, false, 0);
-	CHECK_RES(res);
-
-	/*
-	 * action
-	 */
-	res = val_to_ring(args, (uint64_t)args->sched_next, 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_semop_x(struct event_filler_arguments *args)
-{
-	unsigned long nsops = 0 ;
-	int res = 0;
-	long retval = 0;
-	struct sembuf *sops_pointer = NULL;
-	struct sembuf sops[2] = {0};
-
-	/* Parameter 1: res (type: PT_ERRNO) */
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: nsops (type: PT_UINT32) */
-	syscall_get_arguments_deprecated(args, 2, 1, &nsops);
-	res = val_to_ring(args, nsops, 0, true, 0);
-	CHECK_RES(res);
-
-	/* Extract pointer to the `sembuf` struct */
-	syscall_get_arguments_deprecated(args, 1, 1, (unsigned long *) &sops_pointer);
-
-	if(retval != 0 || sops_pointer == 0 || nsops == 0)
+	int f_cpu_hotplug_e(struct event_filler_arguments *args)
 	{
-		/* We send all 0 when one of these is true:
-		 * - the syscall fails (retval != 0)
-		 * - `sops_pointer` is NULL
-		 * - `nsops` is 0
+		int res;
+
+		/*
+		 * cpu
 		 */
+		res = val_to_ring(args, (uint64_t)args->sched_prev, 0, false, 0);
+		CHECK_RES(res);
+
+		/*
+		 * action
+		 */
+		res = val_to_ring(args, (uint64_t)args->sched_next, 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
 	}
-	else if(nsops == 1)
+
+	int f_sys_semop_x(struct event_filler_arguments *args)
 	{
-		/* If we have just one entry the second will be empty, we don't fill it */
-		if(unlikely(ppm_copy_from_user(sops, (void *)sops_pointer, sizeof(struct sembuf))))
+		unsigned long nsops = 0 ;
+		int res = 0;
+		long retval = 0;
+		struct sembuf *sops_pointer = NULL;
+		struct sembuf sops[2] = {0};
+
+		/* Parameter 1: res (type: PT_ERRNO) */
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: nsops (type: PT_UINT32) */
+		syscall_get_arguments_deprecated(args, 2, 1, &nsops);
+		res = val_to_ring(args, nsops, 0, true, 0);
+		CHECK_RES(res);
+
+		/* Extract pointer to the `sembuf` struct */
+		syscall_get_arguments_deprecated(args, 1, 1, (unsigned long *) &sops_pointer);
+
+		if(retval != 0 || sops_pointer == 0 || nsops == 0)
 		{
-			memset(&sops, 0, sizeof(sops));
+			/* We send all 0 when one of these is true:
+			 * - the syscall fails (retval != 0)
+			 * - `sops_pointer` is NULL
+			 * - `nsops` is 0
+			 */
 		}
-	}
-	else
-	{
-		/* If `nsops>1` we read just the first 2 entries. */
-		if(unlikely(ppm_copy_from_user(sops, (void *)sops_pointer, 2 * sizeof(struct sembuf))))
+		else if(nsops == 1)
 		{
-			memset(&sops, 0, sizeof(sops));
+			/* If we have just one entry the second will be empty, we don't fill it */
+			if(unlikely(ppm_copy_from_user(sops, (void *)sops_pointer, sizeof(struct sembuf))))
+			{
+				memset(&sops, 0, sizeof(sops));
+			}
 		}
+		else
+		{
+			/* If `nsops>1` we read just the first 2 entries. */
+			if(unlikely(ppm_copy_from_user(sops, (void *)sops_pointer, 2 * sizeof(struct sembuf))))
+			{
+				memset(&sops, 0, sizeof(sops));
+			}
+		}
+
+		/* Parameter 3: sem_num_0 (type: PT_UINT16) */
+		res = val_to_ring(args, sops[0].sem_num, 0, true, 0);
+		CHECK_RES(res);
+
+		/* Parameter 4: sem_op_0 (type: PT_INT16) */
+		res = val_to_ring(args, sops[0].sem_op, 0, true, 0);
+		CHECK_RES(res);
+
+		/* Parameter 5: sem_flg_0 (type: PT_FLAGS16) */
+		res = val_to_ring(args, semop_flags_to_scap(sops[0].sem_flg), 0, true, 0);
+		CHECK_RES(res);
+
+		/* Parameter 6: sem_num_1 (type: PT_UINT16) */
+		res = val_to_ring(args, sops[1].sem_num, 0, true, 0);
+		CHECK_RES(res);
+
+		/* Parameter 7: sem_op_1 (type: PT_INT16) */
+		res = val_to_ring(args, sops[1].sem_op, 0, true, 0);
+		CHECK_RES(res);
+
+		/* Parameter 8: sem_flg_1 (type: PT_FLAGS16) */
+		res = val_to_ring(args, semop_flags_to_scap(sops[1].sem_flg), 0, true, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
 	}
 
-	/* Parameter 3: sem_num_0 (type: PT_UINT16) */
-	res = val_to_ring(args, sops[0].sem_num, 0, true, 0);
-	CHECK_RES(res);
-
-	/* Parameter 4: sem_op_0 (type: PT_INT16) */
-	res = val_to_ring(args, sops[0].sem_op, 0, true, 0);
-	CHECK_RES(res);
-
-	/* Parameter 5: sem_flg_0 (type: PT_FLAGS16) */
-	res = val_to_ring(args, semop_flags_to_scap(sops[0].sem_flg), 0, true, 0);
-	CHECK_RES(res);
-
-	/* Parameter 6: sem_num_1 (type: PT_UINT16) */
-	res = val_to_ring(args, sops[1].sem_num, 0, true, 0);
-	CHECK_RES(res);
-
-	/* Parameter 7: sem_op_1 (type: PT_INT16) */
-	res = val_to_ring(args, sops[1].sem_op, 0, true, 0);
-	CHECK_RES(res);
-
-	/* Parameter 8: sem_flg_1 (type: PT_FLAGS16) */
-	res = val_to_ring(args, semop_flags_to_scap(sops[1].sem_flg), 0, true, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_semget_e(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-
-	/*
-	 * key
-	 */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	/*
-	 * nsems
-	 */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	/*
-	 * semflg
-	 */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-	res = val_to_ring(args, semget_flags_to_scap(val), 0, true, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_semctl_e(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-
-	/*
-	 * semid
-	 */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	/*
-	 * semnum
-	 */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	/*
-	 * cmd
-	 */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-	res = val_to_ring(args, semctl_cmd_to_scap(val), 0, true, 0);
-	CHECK_RES(res);
-
-	/*
-	 * optional argument semun/val
-	 */
-	if (val == SETVAL)
-		syscall_get_arguments_deprecated(args, 3, 1, &val);
-	else
-		val = 0;
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_access_e(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-
-	/*
-	 * mode
-	 */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	res = val_to_ring(args, access_flags_to_scap(val), 0, true, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_fchdir_e(struct event_filler_arguments *args)
-{
-	int res = 0;
-	int32_t fd = 0;
-	unsigned long val = 0;
-
-	/* Parameter 1: fd (type: PT_FD)*/
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	fd = (int32_t)val;
-	res = val_to_ring(args, (int64_t)fd, 0, false, 0);
-	CHECK_RES(res);
-	return add_sentinel(args);
-}
-
-int f_sys_fchdir_x(struct event_filler_arguments *args)
-{
-	int64_t res = 0;
-
-	/* Parameter 1: res (type: PT_ERRNO)*/
-	res = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, res, 0, false, 0);
-	CHECK_RES(res);
-	return add_sentinel(args);
-}
-
-int f_sys_close_e(struct event_filler_arguments *args)
-{
-	int res = 0;
-	int32_t fd = 0;
-	unsigned long val = 0;
-
-	/* Parameter 1: fd (type: PT_FD)*/
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	fd = (int32_t)val;
-	res = val_to_ring(args, (int64_t)fd, 0, false, 0);
-	CHECK_RES(res);
-	return add_sentinel(args);
-}
-
-int f_sys_close_x(struct event_filler_arguments *args)
-{
-	int64_t res = 0;
-
-	/* Parameter 1: res (type: PT_ERRNO)*/
-	res = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, res, 0, false, 0);
-	CHECK_RES(res);
-	return add_sentinel(args);
-}
-
-int f_sys_bpf_e(struct event_filler_arguments *args)
-{
-	int res = 0;
-	int32_t cmd = 0;
-	unsigned long val = 0;
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-
-	/* Parameter 1: cmd (type: PT_ENUMFLAGS32) */
-	cmd = (int32_t)val;
-	res = val_to_ring(args, (int64_t)cmd, 0, false, 0);
-	CHECK_RES(res);
-	return add_sentinel(args);
-}
-
-int f_sys_bpf_x(struct event_filler_arguments *args)
-{
-	int res = 0;
-	int64_t fd = 0;
-	unsigned long val = 0;
-	int32_t cmd = 0;
-
-	/* Parameter 1: fd (type: PT_DEC) */
-	fd = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, fd, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: cmd (type: PT_INT64) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	cmd = (int32_t)bpf_cmd_to_scap(val);
-	res = val_to_ring(args, cmd, 0, false, 0);
-	CHECK_RES(res);
-	return add_sentinel(args);
-}
-
-int f_sys_mkdirat_x(struct event_filler_arguments *args)
-{
-	unsigned long val = 0;
-	int res = 0;
-	int64_t retval = 0;
-	int32_t dirfd = 0;
-
-	/* Parameter 1: res (type: PT_ERRNO) */
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: dirfd (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	dirfd = (int32_t)val;
-	if(dirfd == AT_FDCWD)
+	int f_sys_semget_e(struct event_filler_arguments *args)
 	{
-		dirfd = PPM_AT_FDCWD;
-	}
-	res = val_to_ring(args, (int64_t)dirfd, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 3: path (type: PT_FSRELPATH) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	/* Parameter 4: mode (type: PT_UINT32) */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-	res = val_to_ring(args, val, 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_fchmodat_x(struct event_filler_arguments *args)
-{
-	unsigned long val = 0;
-	int res = 0;
-	int64_t retval = 0;
-	int32_t dirfd = 0;
-
-	/* Parameter 1: res (type: PT_ERRNO) */
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: dirfd (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	dirfd = (int32_t)val;
-	if(dirfd == AT_FDCWD)
-	{
-		dirfd = PPM_AT_FDCWD;
-	}
-	res = val_to_ring(args, (int64_t)dirfd, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 3: filename (type: PT_FSRELPATH) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	/* Parameter 4: mode (type: PT_MODE) */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-	res = val_to_ring(args, chmod_mode_to_scap(val), 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_chmod_x(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-	int64_t retval;
-
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/*
-	 * filename
-	 */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	/*
-	 * mode
-	 */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	res = val_to_ring(args, chmod_mode_to_scap(val), 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_fchmod_x(struct event_filler_arguments *args)
-{
-	unsigned long val = 0;
-	int res = 0;
-	int64_t retval = 0;
-	int32_t fd = 0;
-
-	/* Parameter 1: res (type: PT_ERRNO) */
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: fd (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	fd = (int32_t)val;
-	res = val_to_ring(args, (int64_t)fd, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 3: mode (type: PT_MODE) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	res = val_to_ring(args, chmod_mode_to_scap(val), 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_chown_x(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-	int64_t retval;
-
-	/* Parameter 1: res (type: PT_ERRNO)*/
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: path (type: PT_FSPATH) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	/* Parameter 3: uid (type: PT_UINT32) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-
-	res = val_to_ring(args, val, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 4: gid (type: PT_UINT32) */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-
-	res = val_to_ring(args, val, 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_lchown_x(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-	int64_t retval;
-
-	/* Parameter 1: res (type: PT_ERRNO)*/
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: path (type: PT_FSPATH) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	/* Parameter 3: uid (type: PT_UINT32) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-
-	res = val_to_ring(args, val, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 4: gid (type: PT_UINT32) */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-
-	res = val_to_ring(args, val, 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_fchown_x(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-	int64_t retval;
-	int32_t fd;
-
-	/* Parameter 1: res (type: PT_ERRNO)*/
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: fd (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	fd = (int32_t)val;
-	res = val_to_ring(args, (int64_t)fd, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 3: uid (type: PT_UINT32) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-
-	res = val_to_ring(args, val, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 4: gid (type: PT_UINT32) */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-
-	res = val_to_ring(args, val, 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_fchownat_x(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-	int64_t retval;
-	int32_t fd;
-
-	/* Parameter 1: res (type: PT_ERRNO)*/
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: dirfd (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	fd = (int32_t)val;
-
-	if (fd == AT_FDCWD)
-		fd = PPM_AT_FDCWD;
-
-	res = val_to_ring(args, (int64_t)fd, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 3: pathname (type: PT_FSRELPATH) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	/* Parameter 4: uid (type: PT_UINT32) */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-
-	res = val_to_ring(args, val, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 5: gid (type: PT_UINT32) */
-	syscall_get_arguments_deprecated(args, 3, 1, &val);
-
-	res = val_to_ring(args, val, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 6: flags (type: PT_FLAGS32) */
-	syscall_get_arguments_deprecated(args, 4, 1, &val);
-	res = val_to_ring(args, fchownat_flags_to_scap(val), 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_capset_x(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-	int64_t retval;
-	const struct cred *cred;
-
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	cred = get_current_cred();
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
-	val = ((uint64_t)cred->cap_inheritable.cap[1] << 32) | cred->cap_inheritable.cap[0];
-#else
-	val = (uint64_t)cred->cap_inheritable.val;
-#endif
-	res = val_to_ring(args, capabilities_to_scap(val), 0, false, 0);
-	if(unlikely(res != PPM_SUCCESS))
-		goto out;
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
-	val = ((uint64_t)cred->cap_permitted.cap[1] << 32) | cred->cap_permitted.cap[0];
-#else
-	val = (uint64_t)cred->cap_permitted.val;
-#endif
-	res = val_to_ring(args, capabilities_to_scap(val), 0, false, 0);
-	if(unlikely(res != PPM_SUCCESS))
-		goto out;
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
-	val = ((uint64_t)cred->cap_effective.cap[1] << 32) | cred->cap_effective.cap[0];
-#else
-	val = (uint64_t)cred->cap_effective.val;
-#endif
-	res = val_to_ring(args, capabilities_to_scap(val), 0, false, 0);
-	if(unlikely(res != PPM_SUCCESS))
-		goto out;
-
-	put_cred(cred);
-
-	return add_sentinel(args);
-
-out:
-	put_cred(cred);
-	return res;
-}
-
-int f_sys_splice_e(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int32_t fd_in, fd_out;
-	int res;
-
-	/* Parameter 1: fd_in (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	fd_in = (int32_t)val;
-	res = val_to_ring(args, (int64_t)fd_in, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: fd_out (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 2, 1, &val);
-	fd_out = (int32_t)val;
-	res = val_to_ring(args, (int64_t)fd_out, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 3: size (type: PT_UINT64) */
-	syscall_get_arguments_deprecated(args, 4, 1, &val);
-	res = val_to_ring(args, val, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 4: flags (type: PT_FLAGS32) */
-	syscall_get_arguments_deprecated(args, 5, 1, &val);
-	res = val_to_ring(args, splice_flags_to_scap(val), 0, false, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_umount_x(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-	int64_t retval;
-
-	/* Parameter 1: res (type: PT_ERRNO) */
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: name (type: PT_FSPATH) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_umount2_e(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-
-	/* Parameter 1: flags (type: PT_FLAGS32) */
-	syscall_get_arguments_deprecated(args, 1, 1, &val);
-	res = val_to_ring(args, umount2_flags_to_scap(val), 0, true, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_umount2_x(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int res;
-	int64_t retval;
-
-	/* Parameter 1: res (type: PT_ERRNO) */
-	retval = (int64_t)syscall_get_return_value(current, args->regs);
-	res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 2: name (type: PT_FSPATH) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	res = val_to_ring(args, val, 0, true, 0);
-	CHECK_RES(res);
-
-	return add_sentinel(args);
-}
-
-int f_sys_getcwd_x(struct event_filler_arguments *args)
-{
-	unsigned long val;
-
-	/* Parameter 1: res (type: PT_ERRNO) */
-	long retval = syscall_get_return_value(current, args->regs);
-	int res = val_to_ring(args, retval, 0, false, 0);
-	CHECK_RES(res);
-
-	/* we get the path only in case of success, in case of failure we would read only userspace junk */
-	if(retval >= 0)
-	{
-		/* Parameter 2: path (type: PT_CHARBUF) */
+		unsigned long val;
+		int res;
+
+		/*
+		 * key
+		 */
 		syscall_get_arguments_deprecated(args, 0, 1, &val);
 		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		/*
+		 * nsems
+		 */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		/*
+		 * semflg
+		 */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
+		res = val_to_ring(args, semget_flags_to_scap(val), 0, true, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
 	}
-	else
+
+	int f_sys_semctl_e(struct event_filler_arguments *args)
 	{
-		/* Parameter 2: path (type: PT_CHARBUF) */
-		push_empty_param(args);
+		unsigned long val;
+		int res;
+
+		/*
+		 * semid
+		 */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		/*
+		 * semnum
+		 */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		/*
+		 * cmd
+		 */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
+		res = val_to_ring(args, semctl_cmd_to_scap(val), 0, true, 0);
+		CHECK_RES(res);
+
+		/*
+		 * optional argument semun/val
+		 */
+		if (val == SETVAL)
+			syscall_get_arguments_deprecated(args, 3, 1, &val);
+		else
+			val = 0;
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
 	}
 
-	CHECK_RES(res);
+	int f_sys_access_e(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int res;
 
-	return add_sentinel(args);
-}
+		/*
+		 * mode
+		 */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		res = val_to_ring(args, access_flags_to_scap(val), 0, true, 0);
+		CHECK_RES(res);
 
-int f_sys_getdents_e(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int32_t fd = 0;
-	int res;
+		return add_sentinel(args);
+	}
 
-	/* Parameter 1: fd (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	fd = (int32_t)val;
-	res = val_to_ring(args, (int64_t)fd, 0, false, 0);
-	CHECK_RES(res);
+	int f_sys_fchdir_e(struct event_filler_arguments *args)
+	{
+		int res = 0;
+		int32_t fd = 0;
+		unsigned long val = 0;
 
-	return add_sentinel(args);
-}
+		/* Parameter 1: fd (type: PT_FD)*/
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		fd = (int32_t)val;
+		res = val_to_ring(args, (int64_t)fd, 0, false, 0);
+		CHECK_RES(res);
+		return add_sentinel(args);
+	}
 
-int f_sys_getdents64_e(struct event_filler_arguments *args)
-{
-	unsigned long val;
-	int32_t fd = 0;
-	int res;
+	int f_sys_fchdir_x(struct event_filler_arguments *args)
+	{
+		int64_t res = 0;
 
-	/* Parameter 1: fd (type: PT_FD) */
-	syscall_get_arguments_deprecated(args, 0, 1, &val);
-	fd = (int32_t)val;
-	res = val_to_ring(args, (int64_t)fd, 0, false, 0);
-	CHECK_RES(res);
+		/* Parameter 1: res (type: PT_ERRNO)*/
+		res = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, res, 0, false, 0);
+		CHECK_RES(res);
+		return add_sentinel(args);
+	}
 
-	return add_sentinel(args);
-}
+	int f_sys_close_e(struct event_filler_arguments *args)
+	{
+		int res = 0;
+		int32_t fd = 0;
+		unsigned long val = 0;
+
+		/* Parameter 1: fd (type: PT_FD)*/
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		fd = (int32_t)val;
+		res = val_to_ring(args, (int64_t)fd, 0, false, 0);
+		CHECK_RES(res);
+		return add_sentinel(args);
+	}
+
+	int f_sys_close_x(struct event_filler_arguments *args)
+	{
+		int64_t res = 0;
+
+		/* Parameter 1: res (type: PT_ERRNO)*/
+		res = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, res, 0, false, 0);
+		CHECK_RES(res);
+		return add_sentinel(args);
+	}
+
+	int f_sys_bpf_e(struct event_filler_arguments *args)
+	{
+		int res = 0;
+		int32_t cmd = 0;
+		unsigned long val = 0;
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+
+		/* Parameter 1: cmd (type: PT_ENUMFLAGS32) */
+		cmd = (int32_t)val;
+		res = val_to_ring(args, (int64_t)cmd, 0, false, 0);
+		CHECK_RES(res);
+		return add_sentinel(args);
+	}
+
+	int f_sys_bpf_x(struct event_filler_arguments *args)
+	{
+		int res = 0;
+		int64_t fd = 0;
+		unsigned long val = 0;
+		int32_t cmd = 0;
+
+		/* Parameter 1: fd (type: PT_DEC) */
+		fd = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, fd, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: cmd (type: PT_INT64) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		cmd = (int32_t)bpf_cmd_to_scap(val);
+		res = val_to_ring(args, cmd, 0, false, 0);
+		CHECK_RES(res);
+		return add_sentinel(args);
+	}
+
+	int f_sys_mkdirat_x(struct event_filler_arguments *args)
+	{
+		unsigned long val = 0;
+		int res = 0;
+		int64_t retval = 0;
+		int32_t dirfd = 0;
+
+		/* Parameter 1: res (type: PT_ERRNO) */
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: dirfd (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		dirfd = (int32_t)val;
+		if(dirfd == AT_FDCWD)
+		{
+			dirfd = PPM_AT_FDCWD;
+		}
+		res = val_to_ring(args, (int64_t)dirfd, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 3: path (type: PT_FSRELPATH) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		/* Parameter 4: mode (type: PT_UINT32) */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
+		res = val_to_ring(args, val, 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_fchmodat_x(struct event_filler_arguments *args)
+	{
+		unsigned long val = 0;
+		int res = 0;
+		int64_t retval = 0;
+		int32_t dirfd = 0;
+
+		/* Parameter 1: res (type: PT_ERRNO) */
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: dirfd (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		dirfd = (int32_t)val;
+		if(dirfd == AT_FDCWD)
+		{
+			dirfd = PPM_AT_FDCWD;
+		}
+		res = val_to_ring(args, (int64_t)dirfd, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 3: filename (type: PT_FSRELPATH) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		/* Parameter 4: mode (type: PT_MODE) */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
+		res = val_to_ring(args, chmod_mode_to_scap(val), 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_chmod_x(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int res;
+		int64_t retval;
+
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/*
+		 * filename
+		 */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		/*
+		 * mode
+		 */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		res = val_to_ring(args, chmod_mode_to_scap(val), 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_fchmod_x(struct event_filler_arguments *args)
+	{
+		unsigned long val = 0;
+		int res = 0;
+		int64_t retval = 0;
+		int32_t fd = 0;
+
+		/* Parameter 1: res (type: PT_ERRNO) */
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: fd (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		fd = (int32_t)val;
+		res = val_to_ring(args, (int64_t)fd, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 3: mode (type: PT_MODE) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		res = val_to_ring(args, chmod_mode_to_scap(val), 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_chown_x(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int res;
+		int64_t retval;
+
+		/* Parameter 1: res (type: PT_ERRNO)*/
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: path (type: PT_FSPATH) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		/* Parameter 3: uid (type: PT_UINT32) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+
+		res = val_to_ring(args, val, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 4: gid (type: PT_UINT32) */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
+
+		res = val_to_ring(args, val, 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_lchown_x(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int res;
+		int64_t retval;
+
+		/* Parameter 1: res (type: PT_ERRNO)*/
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: path (type: PT_FSPATH) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		/* Parameter 3: uid (type: PT_UINT32) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+
+		res = val_to_ring(args, val, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 4: gid (type: PT_UINT32) */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
+
+		res = val_to_ring(args, val, 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_fchown_x(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int res;
+		int64_t retval;
+		int32_t fd;
+
+		/* Parameter 1: res (type: PT_ERRNO)*/
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: fd (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		fd = (int32_t)val;
+		res = val_to_ring(args, (int64_t)fd, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 3: uid (type: PT_UINT32) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+
+		res = val_to_ring(args, val, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 4: gid (type: PT_UINT32) */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
+
+		res = val_to_ring(args, val, 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_fchownat_x(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int res;
+		int64_t retval;
+		int32_t fd;
+
+		/* Parameter 1: res (type: PT_ERRNO)*/
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: dirfd (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		fd = (int32_t)val;
+
+		if (fd == AT_FDCWD)
+			fd = PPM_AT_FDCWD;
+
+		res = val_to_ring(args, (int64_t)fd, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 3: pathname (type: PT_FSRELPATH) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		/* Parameter 4: uid (type: PT_UINT32) */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
+
+		res = val_to_ring(args, val, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 5: gid (type: PT_UINT32) */
+		syscall_get_arguments_deprecated(args, 3, 1, &val);
+
+		res = val_to_ring(args, val, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 6: flags (type: PT_FLAGS32) */
+		syscall_get_arguments_deprecated(args, 4, 1, &val);
+		res = val_to_ring(args, fchownat_flags_to_scap(val), 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_capset_x(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int res;
+		int64_t retval;
+		const struct cred *cred;
+
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		cred = get_current_cred();
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
+		val = ((uint64_t)cred->cap_inheritable.cap[1] << 32) | cred->cap_inheritable.cap[0];
+#else
+		val = (uint64_t)cred->cap_inheritable.val;
+#endif
+		res = val_to_ring(args, capabilities_to_scap(val), 0, false, 0);
+		if(unlikely(res != PPM_SUCCESS))
+			goto out;
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
+		val = ((uint64_t)cred->cap_permitted.cap[1] << 32) | cred->cap_permitted.cap[0];
+#else
+		val = (uint64_t)cred->cap_permitted.val;
+#endif
+		res = val_to_ring(args, capabilities_to_scap(val), 0, false, 0);
+		if(unlikely(res != PPM_SUCCESS))
+			goto out;
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 3, 0)
+		val = ((uint64_t)cred->cap_effective.cap[1] << 32) | cred->cap_effective.cap[0];
+#else
+		val = (uint64_t)cred->cap_effective.val;
+#endif
+		res = val_to_ring(args, capabilities_to_scap(val), 0, false, 0);
+		if(unlikely(res != PPM_SUCCESS))
+			goto out;
+
+		put_cred(cred);
+
+		return add_sentinel(args);
+
+	out:
+		put_cred(cred);
+		return res;
+	}
+
+	int f_sys_splice_e(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int32_t fd_in, fd_out;
+		int res;
+
+		/* Parameter 1: fd_in (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		fd_in = (int32_t)val;
+		res = val_to_ring(args, (int64_t)fd_in, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: fd_out (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 2, 1, &val);
+		fd_out = (int32_t)val;
+		res = val_to_ring(args, (int64_t)fd_out, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 3: size (type: PT_UINT64) */
+		syscall_get_arguments_deprecated(args, 4, 1, &val);
+		res = val_to_ring(args, val, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 4: flags (type: PT_FLAGS32) */
+		syscall_get_arguments_deprecated(args, 5, 1, &val);
+		res = val_to_ring(args, splice_flags_to_scap(val), 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_umount_x(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int res;
+		int64_t retval;
+
+		/* Parameter 1: res (type: PT_ERRNO) */
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: name (type: PT_FSPATH) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_umount2_e(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int res;
+
+		/* Parameter 1: flags (type: PT_FLAGS32) */
+		syscall_get_arguments_deprecated(args, 1, 1, &val);
+		res = val_to_ring(args, umount2_flags_to_scap(val), 0, true, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_umount2_x(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int res;
+		int64_t retval;
+
+		/* Parameter 1: res (type: PT_ERRNO) */
+		retval = (int64_t)syscall_get_return_value(current, args->regs);
+		res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 2: name (type: PT_FSPATH) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		res = val_to_ring(args, val, 0, true, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_getcwd_x(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+
+		/* Parameter 1: res (type: PT_ERRNO) */
+		long retval = syscall_get_return_value(current, args->regs);
+		int res = val_to_ring(args, retval, 0, false, 0);
+		CHECK_RES(res);
+
+		/* we get the path only in case of success, in case of failure we would read only userspace junk */
+		if(retval >= 0)
+		{
+			/* Parameter 2: path (type: PT_CHARBUF) */
+			syscall_get_arguments_deprecated(args, 0, 1, &val);
+			res = val_to_ring(args, val, 0, true, 0);
+		}
+		else
+		{
+			/* Parameter 2: path (type: PT_CHARBUF) */
+			push_empty_param(args);
+		}
+
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_getdents_e(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int32_t fd = 0;
+		int res;
+
+		/* Parameter 1: fd (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		fd = (int32_t)val;
+		res = val_to_ring(args, (int64_t)fd, 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
+
+	int f_sys_getdents64_e(struct event_filler_arguments *args)
+	{
+		unsigned long val;
+		int32_t fd = 0;
+		int res;
+
+		/* Parameter 1: fd (type: PT_FD) */
+		syscall_get_arguments_deprecated(args, 0, 1, &val);
+		fd = (int32_t)val;
+		res = val_to_ring(args, (int64_t)fd, 0, false, 0);
+		CHECK_RES(res);
+
+		return add_sentinel(args);
+	}
 
 #ifdef CAPTURE_SCHED_PROC_EXEC
-int f_sched_prog_exec(struct event_filler_arguments *args)
-{
-	int res = 0;
-	struct mm_struct *mm = current->mm;
-	int args_len = 0;
-	int correctly_read = 0;
-	unsigned int exe_len = 0; /* the length of the executable string. */
-	int ptid = 0;
-	long total_vm = 0;
-	long total_rss = 0;
-	long swap = 0;
-	int available = STR_STORAGE_SIZE;
-	long env_len = 0;
-	uint32_t tty_nr = 0;
-	uint32_t flags = 0;
-	bool exe_writable = false;
-	enum ppm_overlay exe_layer = PPM_NOT_OVERLAY_FS;
-	struct file *exe_file = NULL;
-	const struct cred *cred = NULL;
-	unsigned long i_ino = 0;
-	unsigned long ctime = 0;
-	unsigned long mtime = 0;
-	uint32_t loginuid = UINT32_MAX;
-	uint64_t cap_inheritable = 0;
-	uint64_t cap_permitted = 0;
-	uint64_t cap_effective = 0;
-	uint32_t euid = UINT32_MAX;
-	char* buf = (char*)args->str_storage;
-	char *trusted_exepath = NULL;
-
-	/* Parameter 1: res (type: PT_ERRNO) */
-	/* Please note: if this filler is called the execve is correctly
-	 * performed, so the return value will be always 0.
-	 */
-	res = val_to_ring(args, 0, 0, false, 0);
-	CHECK_RES(res);
-	/*
-	* The call always succeed so get `exe`, `args` from the current
-	* process; put one \0-separated exe-args string into
-	* str_storage
-	*/
-	if(unlikely(!mm))
+	int f_sched_prog_exec(struct event_filler_arguments *args)
 	{
-		args->str_storage[0] = 0;
-		pr_info("'f_sched_prog_exec' drop, mm=NULL\n");
-		return PPM_FAILURE_BUG;
-	}
+		int res = 0;
+		struct mm_struct *mm = current->mm;
+		int args_len = 0;
+		int correctly_read = 0;
+		unsigned int exe_len = 0; /* the length of the executable string. */
+		int ptid = 0;
+		long total_vm = 0;
+		long total_rss = 0;
+		long swap = 0;
+		int available = STR_STORAGE_SIZE;
+		long env_len = 0;
+		uint32_t tty_nr = 0;
+		uint32_t flags = 0;
+		bool exe_writable = false;
+		enum ppm_overlay exe_layer = PPM_NOT_OVERLAY_FS;
+		struct file *exe_file = NULL;
+		const struct cred *cred = NULL;
+		unsigned long i_ino = 0;
+		unsigned long ctime = 0;
+		unsigned long mtime = 0;
+		uint32_t loginuid = UINT32_MAX;
+		uint64_t cap_inheritable = 0;
+		uint64_t cap_permitted = 0;
+		uint64_t cap_effective = 0;
+		uint32_t euid = UINT32_MAX;
+		char* buf = (char*)args->str_storage;
+		char *trusted_exepath = NULL;
 
-	if(unlikely(!mm->arg_end))
-	{
-		args->str_storage[0] = 0;
-		pr_info("'f_sched_prog_exec' drop, mm->arg_end=NULL\n");
-		return PPM_FAILURE_BUG;
-	}
-
-	/* the combined length of the arguments string + executable string. */
-	args_len = mm->arg_end - mm->arg_start;
-
-	if(args_len > STR_STORAGE_SIZE)
-	{
-		args_len = STR_STORAGE_SIZE;
-	}
-
-	correctly_read = ppm_copy_from_user(args->str_storage, (const void __user *)mm->arg_start, args_len);
-
-	if(args_len && correctly_read == 0)
-	{
-		args->str_storage[args_len - 1] = 0;
-	}
-	else
-	{
-		args_len = 0;
-		*args->str_storage = 0;
-	}
-
-	exe_len = strnlen(args->str_storage, args_len);
-	if(exe_len < args_len)
-	{
-		++exe_len;
-	}
-
-	/* Parameter 2: exe (type: PT_CHARBUF) */
-	res = val_to_ring(args, (uint64_t)(long)args->str_storage, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 3: args (type: PT_CHARBUFARRAY) */
-	res = val_to_ring(args, (int64_t)(long)args->str_storage + exe_len, args_len - exe_len, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 4: tid (type: PT_PID) */
-	res = val_to_ring(args, (int64_t)current->pid, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 5: pid (type: PT_PID) */
-	res = val_to_ring(args, (int64_t)current->tgid, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 6: ptid (type: PT_PID) */
-	if(current->real_parent)
-	{
-		ptid = current->real_parent->pid;
-	}
-
-	res = val_to_ring(args, (int64_t)ptid, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 7: cwd (type: PT_CHARBUF)
-	 * cwd, pushed empty to avoid breaking compatibility
-	 * with the older event format
-	 */
-	res = push_empty_param(args);
-	CHECK_RES(res);
-
-	/* Parameter 8: fdlimit (type: PT_UINT64) */
-	res = val_to_ring(args, (int64_t)rlimit(RLIMIT_NOFILE), 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 9: pgft_maj (type: PT_UINT64) */
-	res = val_to_ring(args, current->maj_flt, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 10: pgft_min (type: PT_UINT64) */
-	res = val_to_ring(args, current->min_flt, 0, false, 0);
-	CHECK_RES(res);
-
-	if(mm)
-	{
-		total_vm = mm->total_vm << (PAGE_SHIFT - 10);
-		total_rss = ppm_get_mm_rss(mm) << (PAGE_SHIFT - 10);
-		swap = ppm_get_mm_swap(mm) << (PAGE_SHIFT - 10);
-	}
-
-	/* Parameter 11: vm_size (type: PT_UINT32) */
-	res = val_to_ring(args, total_vm, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 12: vm_rss (type: PT_UINT32) */
-	res = val_to_ring(args, total_rss, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 13: vm_swap (type: PT_UINT32) */
-	res = val_to_ring(args, swap, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 14: comm (type: PT_CHARBUF) */
-	res = val_to_ring(args, (uint64_t)current->comm, 0, false, 0);
-	CHECK_RES(res);
-
-	args->str_storage[0] = 0;
-#ifdef CONFIG_CGROUPS
-	rcu_read_lock();
-#include <linux/cgroup_subsys.h>
-cgroups_error:
-	rcu_read_unlock();
-#endif
-
-	/* Parameter 15: cgroups (type: PT_CHARBUFARRAY) */
-	res = val_to_ring(args, (int64_t)(long)args->str_storage, STR_STORAGE_SIZE - available, false, 0);
-	CHECK_RES(res);
-
-	env_len = mm->env_end - mm->env_start;
-	if(env_len > STR_STORAGE_SIZE)
-	{
-		env_len = STR_STORAGE_SIZE;
-	}
-
-	correctly_read = ppm_copy_from_user(args->str_storage, (const void __user *)mm->env_start, env_len);
-
-	if(env_len && correctly_read == 0)
-	{
-		args->str_storage[env_len - 1] = 0;
-	}
-	else
-	{
-		env_len = 0;
-		*args->str_storage = 0;
-	}
-
-	/* Parameter 16: env (type: PT_CHARBUFARRAY) */
-	res = val_to_ring(args, (int64_t)(long)args->str_storage, env_len, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 17: tty (type: PT_UINT32) */
-	tty_nr = ppm_get_tty();
-	res = val_to_ring(args, tty_nr, 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 18: pgid (type: PT_PID) */
-	res = val_to_ring(args, (int64_t)task_pgrp_nr_ns(current, task_active_pid_ns(current)), 0, false, 0);
-	CHECK_RES(res);
-
-	/* Parameter 19: loginuid (type: PT_UID) */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0)
-	loginuid = from_kuid(current_user_ns(), audit_get_loginuid(current));
-#else
-	loginuid = audit_get_loginuid(current);
-#endif
-	res = val_to_ring(args, loginuid, 0, false, 0);
-	CHECK_RES(res);
-
-	/* `exe_writable`, `exe_upper_layer` and `exe_lower_layer` flag logic */
-	exe_file = ppm_get_mm_exe_file(mm);
-	if(exe_file != NULL)
-	{
-		if(file_inode(exe_file) != NULL)
+		/* Parameter 1: res (type: PT_ERRNO) */
+		/* Please note: if this filler is called the execve is correctly
+		 * performed, so the return value will be always 0.
+		 */
+		res = val_to_ring(args, 0, 0, false, 0);
+		CHECK_RES(res);
+		/*
+		 * The call always succeed so get `exe`, `args` from the current
+		 * process; put one \0-separated exe-args string into
+		 * str_storage
+		 */
+		if(unlikely(!mm))
 		{
-			/* Support exe_writable */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
-			exe_writable |= (file_permission(exe_file, MAY_WRITE | MAY_NOT_BLOCK) == 0);
-			exe_writable |= inode_owner_or_capable(file_mnt_idmap(exe_file), file_inode(exe_file));
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0)
-			exe_writable |= (inode_permission(current_user_ns(), file_inode(exe_file), MAY_WRITE | MAY_NOT_BLOCK) == 0);
-			exe_writable |= inode_owner_or_capable(current_user_ns(), file_inode(exe_file));
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 1, 0)
-			exe_writable |= (inode_permission(file_inode(exe_file), MAY_WRITE | MAY_NOT_BLOCK) == 0);
-			exe_writable |= inode_owner_or_capable(file_inode(exe_file));
-#endif
-			/*
-			 * Kernels < 3.1.0 doesn't support the exe_writable flags due to the MAY_NOT_BLOCK not being
-			 * available. This limitation is related to the fact that this function (f_sched_prog_exec)
-			 * is in a RCU critical section: this means that this function (and its callee) MUST NOT
-			 * call functions that can yield the processor (e.g. inode_permission that deep down in its
-			 * call stack calls a down_read()). This is addressed after the Kernel 3.1.0 where the
-			 * MAY_OT_BLOCK flag is introduced and avoids the processor to being yield.
-			 */
+			args->str_storage[0] = 0;
+			pr_info("'f_sched_prog_exec' drop, mm=NULL\n");
+			return PPM_FAILURE_BUG;
+		}
 
-			/* Support exe_upper_layer and exe_lower_layer */
-			exe_layer = ppm_get_overlay_layer(exe_file);
+		if(unlikely(!mm->arg_end))
+		{
+			args->str_storage[0] = 0;
+			pr_info("'f_sched_prog_exec' drop, mm->arg_end=NULL\n");
+			return PPM_FAILURE_BUG;
+		}
+
+		/* the combined length of the arguments string + executable string. */
+		args_len = mm->arg_end - mm->arg_start;
+
+		if(args_len > STR_STORAGE_SIZE)
+		{
+			args_len = STR_STORAGE_SIZE;
+		}
+
+		correctly_read = ppm_copy_from_user(args->str_storage, (const void __user *)mm->arg_start, args_len);
+
+		if(args_len && correctly_read == 0)
+		{
+			args->str_storage[args_len - 1] = 0;
+		}
+		else
+		{
+			args_len = 0;
+			*args->str_storage = 0;
+		}
+
+		exe_len = strnlen(args->str_storage, args_len);
+		if(exe_len < args_len)
+		{
+			++exe_len;
+		}
+
+		/* Parameter 2: exe (type: PT_CHARBUF) */
+		res = val_to_ring(args, (uint64_t)(long)args->str_storage, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 3: args (type: PT_CHARBUFARRAY) */
+		res = val_to_ring(args, (int64_t)(long)args->str_storage + exe_len, args_len - exe_len, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 4: tid (type: PT_PID) */
+		res = val_to_ring(args, (int64_t)current->pid, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 5: pid (type: PT_PID) */
+		res = val_to_ring(args, (int64_t)current->tgid, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 6: ptid (type: PT_PID) */
+		if(current->real_parent)
+		{
+			ptid = current->real_parent->pid;
+		}
+
+		res = val_to_ring(args, (int64_t)ptid, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 7: cwd (type: PT_CHARBUF)
+		 * cwd, pushed empty to avoid breaking compatibility
+		 * with the older event format
+		 */
+		res = push_empty_param(args);
+		CHECK_RES(res);
+
+		/* Parameter 8: fdlimit (type: PT_UINT64) */
+		res = val_to_ring(args, (int64_t)rlimit(RLIMIT_NOFILE), 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 9: pgft_maj (type: PT_UINT64) */
+		res = val_to_ring(args, current->maj_flt, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 10: pgft_min (type: PT_UINT64) */
+		res = val_to_ring(args, current->min_flt, 0, false, 0);
+		CHECK_RES(res);
+
+		if(mm)
+		{
+			total_vm = mm->total_vm << (PAGE_SHIFT - 10);
+			total_rss = ppm_get_mm_rss(mm) << (PAGE_SHIFT - 10);
+			swap = ppm_get_mm_swap(mm) << (PAGE_SHIFT - 10);
+		}
+
+		/* Parameter 11: vm_size (type: PT_UINT32) */
+		res = val_to_ring(args, total_vm, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 12: vm_rss (type: PT_UINT32) */
+		res = val_to_ring(args, total_rss, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 13: vm_swap (type: PT_UINT32) */
+		res = val_to_ring(args, swap, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 14: comm (type: PT_CHARBUF) */
+		res = val_to_ring(args, (uint64_t)current->comm, 0, false, 0);
+		CHECK_RES(res);
+
+		args->str_storage[0] = 0;
+#ifdef CONFIG_CGROUPS
+		rcu_read_lock();
+#include <linux/cgroup_subsys.h>
+	cgroups_error:
+		rcu_read_unlock();
+#endif
+
+		/* Parameter 15: cgroups (type: PT_CHARBUFARRAY) */
+		res = val_to_ring(args, (int64_t)(long)args->str_storage, STR_STORAGE_SIZE - available, false, 0);
+		CHECK_RES(res);
+
+		env_len = mm->env_end - mm->env_start;
+		if(env_len > STR_STORAGE_SIZE)
+		{
+			env_len = STR_STORAGE_SIZE;
+		}
+
+		correctly_read = ppm_copy_from_user(args->str_storage, (const void __user *)mm->env_start, env_len);
+
+		if(env_len && correctly_read == 0)
+		{
+			args->str_storage[env_len - 1] = 0;
+		}
+		else
+		{
+			env_len = 0;
+			*args->str_storage = 0;
+		}
+
+		/* Parameter 16: env (type: PT_CHARBUFARRAY) */
+		res = val_to_ring(args, (int64_t)(long)args->str_storage, env_len, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 17: tty (type: PT_UINT32) */
+		tty_nr = ppm_get_tty();
+		res = val_to_ring(args, tty_nr, 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 18: pgid (type: PT_PID) */
+		res = val_to_ring(args, (int64_t)task_pgrp_nr_ns(current, task_active_pid_ns(current)), 0, false, 0);
+		CHECK_RES(res);
+
+		/* Parameter 19: loginuid (type: PT_UID) */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 5, 0)
+		loginuid = from_kuid(current_user_ns(), audit_get_loginuid(current));
+#else
+		loginuid = audit_get_loginuid(current);
+#endif
+		res = val_to_ring(args, loginuid, 0, false, 0);
+		CHECK_RES(res);
+
+		/* `exe_writable`, `exe_upper_layer` and `exe_lower_layer` flag logic */
+		exe_file = ppm_get_mm_exe_file(mm);
+		if(exe_file != NULL)
+		{
+			if(file_inode(exe_file) != NULL)
+			{
+				/* Support exe_writable */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 3, 0)
+				exe_writable |= (file_permission(exe_file, MAY_WRITE | MAY_NOT_BLOCK) == 0);
+				exe_writable |= inode_owner_or_capable(file_mnt_idmap(exe_file), file_inode(exe_file));
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5, 12, 0)
+				exe_writable |= (inode_permission(current_user_ns(), file_inode(exe_file), MAY_WRITE | MAY_NOT_BLOCK) == 0);
+				exe_writable |= inode_owner_or_capable(current_user_ns(), file_inode(exe_file));
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3, 1, 0)
+				exe_writable |= (inode_permission(file_inode(exe_file), MAY_WRITE | MAY_NOT_BLOCK) == 0);
+				exe_writable |= inode_owner_or_capable(file_inode(exe_file));
+#endif
+				/*
+				 * Kernels < 3.1.0 doesn't support the exe_writable flags due to the MAY_NOT_BLOCK not being
+				 * available. This limitation is related to the fact that this function (f_sched_prog_exec)
+				 * is in a RCU critical section: this means that this function (and its callee) MUST NOT
+				 * call functions that can yield the processor (e.g. inode_permission that deep down in its
+				 * call stack calls a down_read()). This is addressed after the Kernel 3.1.0 where the
+				 * MAY_OT_BLOCK flag is introduced and avoids the processor to being yield.
+				 */
+
+				/* Support exe_upper_layer and exe_lower_layer */
+				exe_layer = ppm_get_overlay_layer(exe_file);
 
 			/* Support exe_from_memfd */
 			flags |= get_exe_from_memfd(exe_file);

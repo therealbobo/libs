@@ -1006,6 +1006,27 @@ FILLER(sys_mmap_e, true)
 	res = bpf_push_u64_to_ring(data, val);
 	CHECK_RES(res);
 
+	// get flags
+	val = bpf_syscall_get_argument(data, 3);
+	uint32_t scap_flags = mmap_flags_to_scap(val);
+	// get fd
+	int32_t fd = (int32_t)bpf_syscall_get_argument(data, 4);
+
+	unsigned long dev = 0;
+	unsigned long ino = 0;
+	enum ppm_overlay ol = PPM_NOT_OVERLAY_FS;
+
+	bpf_get_dev_ino_overlay_from_fd(fd, &dev, &ino, &ol);
+
+	if(ol == PPM_OVERLAY_UPPER)
+	{
+		scap_flags |= PPM_FD_UPPER_LAYER_MMAP;
+	}
+	else if(ol == PPM_OVERLAY_LOWER)
+	{
+		scap_flags |= PPM_FD_LOWER_LAYER_MMAP;
+	}
+
 	/*
 	 * prot
 	 */
@@ -1016,14 +1037,12 @@ FILLER(sys_mmap_e, true)
 	/*
 	 * flags
 	 */
-	val = bpf_syscall_get_argument(data, 3);
-	res = bpf_push_u32_to_ring(data, mmap_flags_to_scap(val));
+	res = bpf_push_u32_to_ring(data, scap_flags);
 	CHECK_RES(res);
 
 	/*
 	 * fd
 	 */
-	int32_t fd = (int32_t)bpf_syscall_get_argument(data, 4);
 	res = bpf_push_s64_to_ring(data, (int64_t)fd);
 	CHECK_RES(res);
 

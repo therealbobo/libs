@@ -512,21 +512,23 @@ or GPL2.txt for full copies of the license.
 /*
  * mmap flags
  */
-#define PPM_MAP_SHARED		(1 << 0)
-#define PPM_MAP_PRIVATE		(1 << 1)
-#define PPM_MAP_FIXED		(1 << 2)
-#define PPM_MAP_ANONYMOUS	(1 << 3)
-#define PPM_MAP_32BIT		(1 << 4)
-#define PPM_MAP_RENAME		(1 << 5)
-#define PPM_MAP_NORESERVE	(1 << 6)
-#define PPM_MAP_POPULATE	(1 << 7)
-#define PPM_MAP_NONBLOCK	(1 << 8)
-#define PPM_MAP_GROWSDOWN	(1 << 9)
-#define PPM_MAP_DENYWRITE	(1 << 10)
-#define PPM_MAP_EXECUTABLE	(1 << 11)
-#define PPM_MAP_INHERIT		(1 << 12)
-#define PPM_MAP_FILE		(1 << 13)
-#define PPM_MAP_LOCKED		(1 << 14)
+#define PPM_MAP_SHARED		    (1 << 0)
+#define PPM_MAP_PRIVATE		    (1 << 1)
+#define PPM_MAP_FIXED		    (1 << 2)
+#define PPM_MAP_ANONYMOUS	    (1 << 3)
+#define PPM_MAP_32BIT		    (1 << 4)
+#define PPM_MAP_RENAME		    (1 << 5)
+#define PPM_MAP_NORESERVE	    (1 << 6)
+#define PPM_MAP_POPULATE	    (1 << 7)
+#define PPM_MAP_NONBLOCK	    (1 << 8)
+#define PPM_MAP_GROWSDOWN	    (1 << 9)
+#define PPM_MAP_DENYWRITE	    (1 << 10)
+#define PPM_MAP_EXECUTABLE	    (1 << 11)
+#define PPM_MAP_INHERIT		    (1 << 12)
+#define PPM_MAP_FILE		    (1 << 13)
+#define PPM_MAP_LOCKED		    (1 << 14)
+#define PPM_FD_UPPER_LAYER_MMAP (1 << 15) /* fd is from upper layer */
+#define PPM_FD_LOWER_LAYER_MMAP (1 << 16) /* fd is from upper layer */
 
 /*
  * splice flags
