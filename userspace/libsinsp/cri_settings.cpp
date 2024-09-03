@@ -46,5 +46,75 @@ cri_settings& cri_settings::get()
 	return *s_instance;
 }
 
+const std::vector<std::string>& cri_settings::get_cri_unix_socket_paths()
+{
+	return get().m_cri_unix_socket_paths;
+}
+
+void cri_settings::set_cri_unix_socket_paths(const std::vector<std::string>& v)
+{
+	get().m_cri_unix_socket_paths = v;
+}
+
+const int64_t& cri_settings::get_cri_timeout()
+{
+	return get().m_cri_timeout;
+}
+
+void cri_settings::set_cri_timeout(const int64_t& v)
+{
+	get().m_cri_timeout = v;
+}
+
+const int64_t& cri_settings::get_cri_size_timeout()
+{
+	return get().m_cri_size_timeout;
+}
+
+void cri_settings::set_cri_size_timeout(const int64_t& v)
+{
+	get().m_cri_size_timeout = v;
+}
+
+const sinsp_container_type& cri_settings::get_cri_runtime_type()
+{
+	return get().m_cri_runtime_type;
+}
+
+void cri_settings::set_cri_runtime_type(const sinsp_container_type& v)
+{
+	get().m_cri_runtime_type = v;
+}
+
+const std::string& cri_settings::get_cri_unix_socket_path()
+{
+	return get().m_cri_unix_socket_path;
+}
+
+void cri_settings::set_cri_unix_socket_path(const std::string& v)
+{
+	get().m_cri_unix_socket_path = v;
+}
+
+const bool& cri_settings::get_cri_extra_queries()
+{
+	return get().m_cri_extra_queries;
+}
+
+void cri_settings::set_cri_extra_queries(const bool& v)
+{
+	get().m_cri_extra_queries = v;
+}
+
+void cri_settings::add_cri_unix_socket_path(const std::string& v)
+{
+	get().m_cri_unix_socket_paths.emplace_back(v);
+}
+
+void cri_settings::clear_cri_unix_socket_paths()
+{
+	get().m_cri_unix_socket_paths.clear();
+}
+
 } // namespace cri
 } // namespace libsinsp
