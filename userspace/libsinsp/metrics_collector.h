@@ -20,12 +20,13 @@ limitations under the License.
 
 #include <libscap/metrics_v2.h>
 #include <libscap/scap_machine_info.h>
-#include <libsinsp/threadinfo.h>
 #include <libscap/strl.h>
 #include <cmath>
 #include <memory>
 #include <optional>
 #include <string_view>
+
+class sinsp_thread_manager;
 
 struct sinsp_stats_v2
 {

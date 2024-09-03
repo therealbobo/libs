@@ -183,10 +183,7 @@ public:
 	virtual void open_modern_bpf(unsigned long driver_buffer_bytes_dim = DEFAULT_DRIVER_BUFFER_BYTES_DIM, uint16_t cpus_for_each_buffer = DEFAULT_CPU_FOR_EACH_BUFFER, bool online_only = true, const libsinsp::events::set<ppm_sc_code> &ppm_sc_of_interest = {});
 	virtual void open_test_input(scap_test_input_data* data, sinsp_mode_t mode = SINSP_MODE_TEST);
 
-	void fseek(uint64_t filepos)
-	{
-		scap_fseek(m_h, filepos);
-	}
+	void fseek(uint64_t filepos);
 
 	std::string generate_gvisor_config(const std::string& socket_path);
 
@@ -362,10 +359,7 @@ public:
 	 * When the routine is run, then the purge interval and thread timeout
 	 * change defaults, but with no observable effect.
 	 */
-	void set_auto_threads_purging(bool enabled)
-	{
-		m_auto_threads_purging = enabled;
-	}
+	void set_auto_threads_purging(bool enabled);
 
 	/*!
 	 * \brief Sets the interval (in seconds) at which the automatic threads
@@ -381,10 +375,7 @@ public:
 	 * thread infos from the internal state. If disabled, the client is
 	 * responsible of manually-handling the lifetime of containers.
 	 */
-	void set_auto_containers_purging(bool enabled)
-	{
-		m_auto_containers_purging = enabled;
-	}
+	void set_auto_containers_purging(bool enabled);
 
 	/*!
 	 * \brief Sets the interval (in seconds) at which the automatic containers
@@ -400,10 +391,7 @@ public:
 	 * users and groups infos from the internal state. If disabled, the client
 	 * is responsible of manually-handling the lifetime of users and groups.
 	 */
-	void set_auto_usergroups_purging(bool enabled)
-	{
-		m_auto_usergroups_purging = enabled;
-	}
+	void set_auto_usergroups_purging(bool enabled);
 
 	/*!
 	 * \brief Sets the interval (in seconds) at which the automatic
@@ -555,15 +543,9 @@ public:
 	  After this, callbacks on libsinsp::event_processor will happen at
 	  the appropriate times. This registration must happen before calling open.
 	*/
-	void register_external_event_processor(libsinsp::event_processor& processor)
-	{
-		m_external_event_processor = &processor;
-	}
+	void register_external_event_processor(libsinsp::event_processor& processor);
 
-	libsinsp::event_processor* get_external_event_processor() const
-	{
-		return m_external_event_processor;
-	}
+	libsinsp::event_processor* get_external_event_processor() const;
 
 	/*!
 	  \brief Return the event and system call information tables.
@@ -576,10 +558,7 @@ public:
 	/*!
 	  \brief get last library error.
 	*/
-	std::string getlasterr() const
-	{
-		return m_lasterr;
-	}
+	std::string getlasterr() const;
 
 	/*!
 	  \brief Get the list of machine network interfaces.
@@ -832,10 +811,7 @@ public:
 	  \brief If this is an offline capture, return the name of the file that is
 	   being read, otherwise return an empty string.
 	*/
-	std::string get_input_filename() const
-	{
-		return m_input_filename;
-	}
+	std::string get_input_filename() const;
 
 	/*!
 	  \brief When reading events from a trace file or a plugin, this function
@@ -856,17 +832,7 @@ public:
 	  \brief Make the amount of data gathered for a syscall to be
 	  determined by the number of parameters.
 	*/
-	virtual int /*SCAP_X*/ dynamic_snaplen(bool enable)
-	{
-		if(enable)
-		{
-			return scap_enable_dynamic_snaplen(m_h);
-		}
-		else
-		{
-			return scap_disable_dynamic_snaplen(m_h);
-		}
-	}
+	virtual int /*SCAP_X*/ dynamic_snaplen(bool enable);
 
 	//
 	// Misc internal stuff
@@ -874,10 +840,7 @@ public:
 	void stop_dropping_mode();
 	void start_dropping_mode(uint32_t sampling_ratio);
 	void on_new_entry_from_proc(void* context, int64_t tid, scap_threadinfo* tinfo, scap_fdinfo* fdinfo);
-	void set_get_procs_cpu_from_driver(bool get_procs_cpu_from_driver)
-	{
-		m_get_procs_cpu_from_driver = get_procs_cpu_from_driver;
-	}
+	void set_get_procs_cpu_from_driver(bool get_procs_cpu_from_driver);
 
 	inline sinsp_parser* get_parser()
 	{
@@ -919,14 +882,9 @@ public:
 
 	void import_ipv4_interface(const sinsp_ipv4_ifinfo& ifinfo);
 
-	uint64_t get_bytes_read() const
-	{
-		return scap_ftell(m_h);
-	}
+	uint64_t get_bytes_read() const;
 	void refresh_ifaddr_list();
-	void refresh_proc_list() {
-		scap_refresh_proc_table(get_scap_platform());
-	}
+	void refresh_proc_list();
 
 	std::vector<long> get_n_tracepoint_hit() const;
 
@@ -1144,11 +1102,7 @@ private:
 
 	void restart_capture();
 
-	bool increased_snaplen_port_range_set() const
-	{
-		return m_increased_snaplen_port_range.range_start > 0 &&
-		       m_increased_snaplen_port_range.range_end > 0;
-	}
+	bool increased_snaplen_port_range_set() const;
 
 	double get_read_progress_file() const;
 	void get_read_progress_plugin(double* nres, std::string* sres) const;

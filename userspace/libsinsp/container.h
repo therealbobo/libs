@@ -18,7 +18,6 @@ limitations under the License.
 
 #pragma once
 
-#include <functional>
 #include <memory>
 #include <unordered_map>
 
@@ -133,11 +132,7 @@ public:
 	// across execs e.g. "sh -c /bin/true" execing /bin/true.
 	void identify_category(sinsp_threadinfo *tinfo);
 
-	bool container_exists(const std::string& container_id) const override{
-		auto containers = m_containers.lock();
-		return containers->find(container_id) != containers->end() ||
-			m_lookups.find(container_id) != m_lookups.end();
-	}
+	bool container_exists(const std::string& container_id) const override;
 
 	typedef std::function<void(const sinsp_container_info&, sinsp_threadinfo *)> new_container_cb;
 	typedef std::function<void(const sinsp_container_info&)> remove_container_cb;
@@ -199,7 +194,7 @@ public:
 	void set_cri_timeout(int64_t timeout_ms);
 	void set_cri_async(bool async);
 	void set_container_labels_max_len(uint32_t max_label_len);
-	sinsp* get_inspector() { return m_inspector; }
+	sinsp* get_inspector();
 
 	/**
 	 * \brief set the status of an async container metadata lookup
@@ -212,10 +207,7 @@ public:
 	 * state of the lookup via this method and call should_lookup() before
 	 * starting a new lookup.
 	 */
-	void set_lookup_status(const std::string& container_id, sinsp_container_type ctype, sinsp_container_lookup::state state) override
-	{
-		m_lookups[container_id][ctype] = state;
-	}
+	void set_lookup_status(const std::string& container_id, sinsp_container_type ctype, sinsp_container_lookup::state state) override;
 
 	/**
 	 * \brief do we want to start a new lookup for container metadata?
@@ -227,25 +219,14 @@ public:
 	 * This method effectively checks if m_lookups[container_id][ctype]
 	 * exists, without creating unnecessary map entries along the way.
 	 */
-	bool should_lookup(const std::string& container_id, sinsp_container_type ctype) override
-	{
-		auto container_lookups = m_lookups.find(container_id);
-		if(container_lookups == m_lookups.end())
-		{
-			return true;
-		}
-		auto engine_lookup = container_lookups->second.find(ctype);
-		return engine_lookup == container_lookups->second.end();
-	}
+	bool should_lookup(const std::string& container_id, sinsp_container_type ctype) override;
 
 	/**
 	* \brief get the list of container engines in the inspector
 	*
 	* @return a pointer to the list of container engines
 	*/
-	std::list<std::shared_ptr<libsinsp::container_engine::container_engine_base>>* get_container_engines() {
-		return &m_container_engines;
-	}
+	std::list<std::shared_ptr<libsinsp::container_engine::container_engine_base>>* get_container_engines();
 	uint64_t m_last_flush_time_ns;
 	std::string container_to_json(const sinsp_container_info& container_info);
 

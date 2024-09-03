@@ -21,17 +21,12 @@ limitations under the License.
 #ifndef _WIN32
 #include <inttypes.h>
 #include <sys/socket.h>
-#include <algorithm>
 #include <unistd.h>
 #else
 #define NOMINMAX
 #define localtime_r(a, b) (localtime_s(b, a) == 0 ? b : NULL)
 #endif
 
-#include <limits>
-#include <string>
-#include <optional>
-#include <functional>
 #include <filesystem>
 
 #include <libsinsp/sinsp.h>

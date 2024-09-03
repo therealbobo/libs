@@ -683,6 +683,11 @@ std::string sinsp::generate_gvisor_config(const std::string& socket_path)
 	return gvisor_config::generate(socket_path);
 }
 
+void sinsp::fseek(uint64_t filepos)
+{
+	scap_fseek(m_h, filepos);
+}
+
 int64_t sinsp::get_file_size(const std::string& fname, char *error)
 {
 	std::error_code ec;
@@ -965,6 +970,15 @@ void sinsp::import_ipv4_interface(const sinsp_ipv4_ifinfo& ifinfo)
 	m_network_interfaces.import_ipv4_interface(ifinfo);
 }
 
+uint64_t sinsp::get_bytes_read() const
+{
+	return scap_ftell(m_h);
+}
+
+void sinsp::refresh_proc_list() {
+	scap_refresh_proc_table(get_scap_platform());
+}
+
 void sinsp::import_user_list()
 {
 	uint32_t j;
@@ -1023,6 +1037,12 @@ void sinsp::restart_capture()
 
 	// Restore the saved state info
 	m_nevts = nevts;
+}
+
+bool sinsp::increased_snaplen_port_range_set() const
+{
+	return m_increased_snaplen_port_range.range_start > 0 &&
+			m_increased_snaplen_port_range.range_end > 0;
 }
 
 uint64_t sinsp::max_buf_used() const
@@ -1824,9 +1844,39 @@ void sinsp::set_min_log_severity(sinsp_logger::severity sev)
 	libsinsp_logger()->set_severity(sev);
 }
 
+void sinsp::set_auto_threads_purging(bool enabled)
+{
+	m_auto_threads_purging = enabled;
+}
+
+void sinsp::set_auto_containers_purging(bool enabled)
+{
+	m_auto_containers_purging = enabled;
+}
+
+void sinsp::set_auto_usergroups_purging(bool enabled)
+{
+	m_auto_usergroups_purging = enabled;
+}
+
+void sinsp::register_external_event_processor(libsinsp::event_processor& processor)
+{
+	m_external_event_processor = &processor;
+}
+
+libsinsp::event_processor* sinsp::get_external_event_processor() const
+{
+	return m_external_event_processor;
+}
+
 sinsp_evttables* sinsp::get_event_info_tables()
 {
 	return &g_infotables;
+}
+
+std::string sinsp::getlasterr() const
+{
+	return m_lasterr;
 }
 
 void sinsp::set_buffer_format(sinsp_evt::param_fmt format)
@@ -1923,6 +1973,11 @@ void sinsp::get_read_progress_plugin(double* nres, std::string* sres) const
 	*nres = ((double)nplg) / 100;
 }
 
+std::string sinsp::get_input_filename() const
+{
+	return m_input_filename;
+}
+
 double sinsp::get_read_progress() const
 {
 	if(is_plugin())
@@ -1951,6 +2006,24 @@ double sinsp::get_read_progress_with_str(std::string* progress_str) const
 		return get_read_progress_file();
 	}
 }
+
+int /*SCAP_X*/ sinsp::dynamic_snaplen(bool enable)
+{
+	if(enable)
+	{
+		return scap_enable_dynamic_snaplen(m_h);
+	}
+	else
+	{
+		return scap_disable_dynamic_snaplen(m_h);
+	}
+}
+
+void sinsp::set_get_procs_cpu_from_driver(bool get_procs_cpu_from_driver)
+{
+	m_get_procs_cpu_from_driver = get_procs_cpu_from_driver;
+}
+
 
 bool sinsp::remove_inactive_threads()
 {

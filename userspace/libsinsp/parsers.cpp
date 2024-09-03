@@ -28,7 +28,6 @@ limitations under the License.
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
-#include <limits>
 
 #include <libsinsp/container_engine/mesos.h>
 #include <libsinsp/sinsp.h>
@@ -40,7 +39,6 @@ limitations under the License.
 #include <libscap/strl.h>
 #include <libsinsp/plugin_manager.h>
 #include <libsinsp/sinsp_observer.h>
-#include <libsinsp/sinsp_int.h>
 
 #if !defined(MINIMAL_BUILD) && !defined(__EMSCRIPTEN__)
 #include <libsinsp/container_engine/docker/async_source.h>

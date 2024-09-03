@@ -18,8 +18,6 @@ limitations under the License.
 
 #pragma once
 
-#include <libsinsp/sinsp_int.h>
-
 class sinsp_observer
 {
 public:

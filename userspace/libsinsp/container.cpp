@@ -567,6 +567,13 @@ void sinsp_container_manager::identify_category(sinsp_threadinfo *tinfo)
 	}
 }
 
+bool sinsp_container_manager::container_exists(const std::string& container_id) const
+{
+	auto containers = m_containers.lock();
+	return containers->find(container_id) != containers->end() ||
+		m_lookups.find(container_id) != m_lookups.end();
+}
+
 void sinsp_container_manager::subscribe_on_new_container(new_container_cb callback)
 {
 	m_new_callbacks.emplace_back(callback);
@@ -728,4 +735,31 @@ void sinsp_container_manager::set_cri_async(bool async)
 void sinsp_container_manager::set_container_labels_max_len(uint32_t max_label_len)
 {
 	sinsp_container_info::m_container_label_max_length = max_label_len;
+}
+
+sinsp* sinsp_container_manager::get_inspector()
+{
+	return m_inspector;
+}
+
+void sinsp_container_manager::set_lookup_status(const std::string& container_id, sinsp_container_type ctype, sinsp_container_lookup::state state)
+{
+	m_lookups[container_id][ctype] = state;
+}
+
+bool sinsp_container_manager::should_lookup(const std::string& container_id, sinsp_container_type ctype)
+{
+	auto container_lookups = m_lookups.find(container_id);
+	if(container_lookups == m_lookups.end())
+	{
+		return true;
+	}
+	auto engine_lookup = container_lookups->second.find(ctype);
+	return engine_lookup == container_lookups->second.end();
+}
+
+std::list<std::shared_ptr<libsinsp::container_engine::container_engine_base>>*
+sinsp_container_manager::get_container_engines()
+{
+	return &m_container_engines;
 }
