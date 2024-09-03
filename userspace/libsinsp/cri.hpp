@@ -21,7 +21,8 @@ limitations under the License.
 #include <libsinsp/cri.h>
 
 #include <libsinsp/grpc_channel_registry.h>
-#include <libsinsp/sinsp.h>
+#include <libsinsp/container_info.h>
+#include <libsinsp/logger.h>
 #include <libsinsp/sinsp_int.h>
 
 #include <chrono>

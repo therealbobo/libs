@@ -18,6 +18,7 @@ limitations under the License.
 #include <cstdio>
 #include <iostream>
 #include <chrono>
+#include <thread>
 #ifndef _WIN32
 #include <getopt.h>
 #endif // _WIN32
@@ -28,8 +29,8 @@ limitations under the License.
 #include <memory>
 #include "util.h"
 #include <libsinsp/filter/ppm_codes.h>
-#include <unordered_set>
-#include <memory>
+#include <libsinsp/eventformatter.h>
+#include <libsinsp/filter.h>
 
 #ifndef _WIN32
 extern "C" {

@@ -20,7 +20,6 @@ limitations under the License.
 
 #include <mutex>
 #include <shared_mutex>
-#include <thread>
 #include <libsinsp/utils.h>
 
 namespace libsinsp {

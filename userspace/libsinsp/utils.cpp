@@ -51,7 +51,7 @@ limitations under the License.
 
 #include <algorithm>
 #include <cerrno>
-#include <functional>
+#include <sstream>
 #include <sys/stat.h>
 
 #ifndef PATH_MAX
@@ -1345,6 +1345,23 @@ const char* print_format_to_string(ppm_print_format fmt)
 		ASSERT(false);
 		return "NA";
 	}
+}
+
+template<typename It>
+std::string sinsp_join(It begin, It end, char delim)
+{
+	if(begin == end)
+	{
+		return "";
+	}
+	std::stringstream ss;
+	ss << *begin;
+	++begin;
+	for(auto it = begin; it != end; ++it)
+	{
+		ss << delim << *it;
+	}
+	return ss.str();
 }
 
 ///////////////////////////////////////////////////////////////////////////////

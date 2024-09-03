@@ -20,7 +20,6 @@ limitations under the License.
 
 #include <libsinsp/filter_value.h>
 #include <libsinsp/prefix_search.h>
-#include <libsinsp/event.h>
 #include <libsinsp/filter_compare.h>
 #include <libsinsp/filter_field.h>
 #include <libsinsp/filter_cache.h>
@@ -31,6 +30,8 @@ limitations under the License.
 #include <string>
 #include <unordered_set>
 #include <memory>
+
+class sinsp_evt;
 
 namespace re2 { class RE2; };
 
@@ -71,27 +72,18 @@ public:
 	// Allocate a new check of the same type.
 	// Every filtercheck plugin must implement this.
 	//
-	virtual std::unique_ptr<sinsp_filter_check> allocate_new()
-	{
-		throw sinsp_exception("can't clone abstract sinsp_filter_check");
-	}
+	virtual std::unique_ptr<sinsp_filter_check> allocate_new();
 
 	//
 	// Get the list of fields that this check exports
 	//
-	virtual const filter_check_info* get_fields() const
-	{
-		return m_info;
-	}
+	virtual const filter_check_info* get_fields() const;
 
 	//
 	// Return the info about the field that this instance contains
 	// This must be used only after `parse_field_name`
 	//
-	virtual const filtercheck_field_info* get_field_info() const
-	{
-		return m_field;
-	}
+	virtual const filtercheck_field_info* get_field_info() const;
 
 	//
 	// Parse the name of the field.
@@ -114,18 +106,12 @@ public:
 	//
 	// Return the right-hand side constant values used for comparison
 	//
-	virtual const std::vector<filter_value_t>& get_filter_values() const
-	{
-		return m_vals;
-	}
+	virtual const std::vector<filter_value_t>& get_filter_values() const;
 
 	//
 	// Return true if the filter check is compared against another filter check
 	//
-	virtual bool has_filtercheck_value() const
-	{
-		return m_rhs_filter_check.get() != nullptr;
-	}
+	virtual bool has_filtercheck_value() const;
 
 	//
 	// Add extract transformers to the filter check
@@ -135,23 +121,13 @@ public:
 	//
 	// Return true if the filter check contains field transformers
 	//
-	virtual bool has_transformers() const
-	{
-		return !m_transformers.empty();
-	}
+	virtual bool has_transformers() const;
 
 	//
 	// Return the type of the current field after applying
 	// all the configured transformers
 	//
-	virtual const filtercheck_field_info* get_transformed_field_info() const
-	{
-		if (m_transformed_field != nullptr)
-		{
-			return m_transformed_field.get();
-		}
-		return get_field_info();
-	}
+	virtual const filtercheck_field_info* get_transformed_field_info() const;
 
 	//
 	// Extract the field from the event. If sanitize_strings is true, any
@@ -197,10 +173,7 @@ public:
 protected:
 	virtual bool compare_nocache(sinsp_evt*);
 
-	virtual Json::Value extract_as_js(sinsp_evt*, uint32_t* len)
-	{
-		return Json::nullValue;
-	}
+	virtual Json::Value extract_as_js(sinsp_evt*, uint32_t* len);
 
 	//
 	// If present, apply all the transformers on the current filter check

@@ -18,15 +18,13 @@ limitations under the License.
 
 #pragma once
 
-#include <cassert>
-#include <cstdint>
 #include <map>
 #include <memory>
 #include <list>
 #include <string>
 #include <vector>
 #include <libsinsp/container_engine/sinsp_container_type.h>
-#include "json/json.h"
+#include <json/json.h>
 
 class sinsp;
 class sinsp_threadinfo;
@@ -52,15 +50,7 @@ static inline bool is_docker_compatible(sinsp_container_type t)
 class sinsp_container_lookup
 {
 public:
-	sinsp_container_lookup(short max_retry = 3, short max_delay_ms = 500):
-		m_max_retry(max_retry),
-		m_max_delay_ms(max_delay_ms),
-		m_state(state::FAILED),
-		m_retry(0)
-	{
-		assert(max_retry >= 0);
-		assert(max_delay_ms > 0);
-	}
+	sinsp_container_lookup(short max_retry = 3, short max_delay_ms = 500);
 
 	/**
 	 * \brief the state of a container metadata lookup
@@ -81,53 +71,29 @@ public:
 		FAILED = 2
 	};
 
-	state get_status() const { return m_state; }
-	void set_status(state s) { m_state = s; }
+	state get_status() const;
+	void set_status(state s);
 
-	bool is_successful() const
-	{
-		return m_state == state::SUCCESSFUL;
-	}
+	bool is_successful() const;
 
 	/**
 	 * True when not successful and we didn't do too many attempts
 	 */
-	bool should_retry() const
-	{
-		if(is_successful())
-		{
-			return false;
-		}
-
-		return m_retry < m_max_retry;
-	}
+	bool should_retry() const;
 
 	/**
 	 * i.e. whether we didn't do any retry yet
 	 */
-	bool first_attempt() const
-	{
-		return m_retry == 0;
-	}
+	bool first_attempt() const;
 
-	short retry_no() const
-	{
-		return m_retry;
-	}
+	short retry_no() const;
 
-	void attempt_increment()
-	{
-		++m_retry;
-	}
+	void attempt_increment();
 
 	/**
 	 * Compute the delay and increment retry count
 	 */
-	short delay()
-	{
-		int curr_delay = 125 << (m_retry-1);
-		return curr_delay > m_max_delay_ms ? m_max_delay_ms : curr_delay;
-	}
+	short delay();
 
 private:
 	short m_max_retry;
@@ -144,12 +110,7 @@ public:
 	class container_port_mapping
 	{
 	public:
-		container_port_mapping():
-			m_host_ip(0),
-			m_host_port(0),
-			m_container_port(0)
-		{
-		}
+		container_port_mapping();
 		uint32_t m_host_ip;
 		uint16_t m_host_port;
 		uint16_t m_container_port;
@@ -158,45 +119,17 @@ public:
 	class container_mount_info
 	{
 	public:
-		container_mount_info():
-			m_source(""),
-			m_dest(""),
-			m_mode(""),
-			m_rdwr(false),
-			m_propagation("")
-		{
-		}
+		container_mount_info();
 
 		container_mount_info(const std::string&& source, const std::string&& dest,
 				     const std::string&& mode, const bool rw,
-				     const std::string&& propagation) :
-			m_source(source), m_dest(dest), m_mode(mode), m_rdwr(rw), m_propagation(propagation)
-		{
-		}
+				     const std::string&& propagation);
 
 		container_mount_info(const Json::Value &source, const Json::Value &dest,
 				     const Json::Value &mode, const Json::Value &rw,
-				     const Json::Value &propagation)
-		{
-			get_string_value(source, m_source);
-			get_string_value(dest, m_dest);
-			get_string_value(mode, m_mode);
-			get_string_value(propagation, m_propagation);
+				     const Json::Value &propagation);
 
-			if(!rw.isNull() && rw.isBool())
-			{
-				m_rdwr = rw.asBool();
-			}
-		}
-
-		std::string to_string() const
-		{
-			return m_source + ":" +
-			       m_dest + ":" +
-			       m_mode + ":" +
-			       (m_rdwr ? "true" : "false") + ":" +
-			       m_propagation;
-		}
+		std::string to_string() const;
 
 		inline void get_string_value(const Json::Value &val, std::string &result)
 		{
@@ -255,50 +188,22 @@ public:
 		std::vector<std::string> m_health_probe_args;
 	};
 
-	sinsp_container_info(sinsp_container_lookup &&lookup = sinsp_container_lookup()):
-		m_type(CT_UNKNOWN),
-		m_container_ip(0),
-		m_privileged(false),
-		m_memory_limit(0),
-		m_swap_limit(0),
-		m_cpu_shares(1024),
-		m_cpu_quota(0),
-		m_cpu_period(100000),
-		m_cpuset_cpu_count(0),
-		m_is_pod_sandbox(false),
-		m_lookup(std::move(lookup)),
-		m_container_user("<NA>"),
-		m_metadata_deadline(0),
-		m_size_rw_bytes(-1)
-	{
-	}
+	sinsp_container_info(sinsp_container_lookup &&lookup = sinsp_container_lookup());
 
-	void clear()
-	{
-		this->~sinsp_container_info();
-		new(this) sinsp_container_info();
-	}
+	void clear();
 
-	const std::vector<std::string>& get_env() const { return m_env; }
+	const std::vector<std::string>& get_env() const;
 
 	const container_mount_info *mount_by_idx(uint32_t idx) const;
 	const container_mount_info *mount_by_source(const std::string&) const;
 	const container_mount_info *mount_by_dest(const std::string&) const;
 
-	bool is_pod_sandbox() const {
-		return m_is_pod_sandbox;
-	}
+	bool is_pod_sandbox() const;
 
-	bool is_successful() const { return m_lookup.is_successful(); }
+	bool is_successful() const;
 
-	void set_lookup_status(sinsp_container_lookup::state s)
-	{
-		m_lookup.set_status(s);
-	}
-	sinsp_container_lookup::state get_lookup_status() const
-	{
-		return m_lookup.get_status();
-	}
+	void set_lookup_status(sinsp_container_lookup::state s);
+	sinsp_container_lookup::state get_lookup_status() const;
 
 	std::unique_ptr<sinsp_threadinfo> get_tinfo(sinsp* inspector) const;
 

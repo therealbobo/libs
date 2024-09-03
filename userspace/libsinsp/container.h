@@ -23,7 +23,6 @@ limitations under the License.
 
 #include <libscap/scap.h>
 
-#include <libsinsp/event.h>
 #include <libsinsp/container_info.h>
 
 #if !defined(_WIN32) && !defined(MINIMAL_BUILD) && !defined(__EMSCRIPTEN__)
@@ -37,7 +36,10 @@ limitations under the License.
 #include <libsinsp/container_engine/sinsp_container_type.h>
 #include <libsinsp/mutex.h>
 
+class sinsp_evt;
 class sinsp_dumper;
+
+struct sinsp_stats_v2;
 
 class sinsp_container_manager :
 	public libsinsp::container_engine::container_cache_interface

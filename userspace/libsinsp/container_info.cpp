@@ -16,11 +16,8 @@ limitations under the License.
 
 */
 
-#include <utility>
-
 #include <libsinsp/container_info.h>
 #include <libsinsp/sinsp.h>
-#include <libsinsp/sinsp_int.h>
 
 std::vector<std::string> sinsp_container_info::container_health_probe::probe_type_names = {
 	"None",
@@ -29,6 +26,68 @@ std::vector<std::string> sinsp_container_info::container_health_probe::probe_typ
 	"ReadinessProbe",
 	"End"
 };
+
+sinsp_container_lookup::sinsp_container_lookup(short max_retry, short max_delay_ms):
+	m_max_retry(max_retry),
+	m_max_delay_ms(max_delay_ms),
+	m_state(state::FAILED),
+	m_retry(0)
+{
+	assert(max_retry >= 0);
+	assert(max_delay_ms > 0);
+}
+
+sinsp_container_lookup::state sinsp_container_lookup::get_status() const
+{
+	return m_state;
+}
+
+void sinsp_container_lookup::set_status(state s)
+{
+	m_state = s;
+}
+
+bool sinsp_container_lookup::is_successful() const
+{
+	return m_state == sinsp_container_lookup::state::SUCCESSFUL;
+}
+
+bool sinsp_container_lookup::should_retry() const
+{
+	if(is_successful())
+	{
+		return false;
+	}
+
+	return m_retry < m_max_retry;
+}
+
+/**
+	* i.e. whether we didn't do any retry yet
+	*/
+bool sinsp_container_lookup::first_attempt() const
+{
+	return m_retry == 0;
+}
+
+short sinsp_container_lookup::retry_no() const
+{
+	return m_retry;
+}
+
+void sinsp_container_lookup::attempt_increment()
+{
+	++m_retry;
+}
+
+/**
+	* Compute the delay and increment retry count
+	*/
+short sinsp_container_lookup::delay()
+{
+	int curr_delay = 125 << (m_retry-1);
+	return curr_delay > m_max_delay_ms ? m_max_delay_ms : curr_delay;
+}
 
 // Initialize container max label length to default 100 value
 uint32_t sinsp_container_info::m_container_label_max_length = 100;
@@ -110,6 +169,54 @@ void sinsp_container_info::container_health_probe::add_health_probes(const std::
 	}
 }
 
+sinsp_container_info::container_port_mapping::container_port_mapping():
+	m_host_ip(0),
+	m_host_port(0),
+	m_container_port(0)
+{
+}
+
+sinsp_container_info::container_mount_info::container_mount_info():
+	m_source(""),
+	m_dest(""),
+	m_mode(""),
+	m_rdwr(false),
+	m_propagation("")
+{
+}
+
+sinsp_container_info::container_mount_info::container_mount_info(const std::string&& source, const std::string&& dest,
+				const std::string&& mode, const bool rw,
+				const std::string&& propagation) :
+	m_source(source), m_dest(dest), m_mode(mode), m_rdwr(rw), m_propagation(propagation)
+{
+}
+
+sinsp_container_info::container_mount_info::container_mount_info(const Json::Value &source, const Json::Value &dest,
+				const Json::Value &mode, const Json::Value &rw,
+				const Json::Value &propagation)
+{
+	get_string_value(source, m_source);
+	get_string_value(dest, m_dest);
+	get_string_value(mode, m_mode);
+	get_string_value(propagation, m_propagation);
+
+	if(!rw.isNull() && rw.isBool())
+	{
+		m_rdwr = rw.asBool();
+	}
+}
+
+
+std::string sinsp_container_info::container_mount_info::to_string() const
+{
+	return m_source + ":" +
+			m_dest + ":" +
+			m_mode + ":" +
+			(m_rdwr ? "true" : "false") + ":" +
+			m_propagation;
+}
+
 const sinsp_container_info::container_mount_info *sinsp_container_info::mount_by_idx(uint32_t idx) const
 {
 	if (idx >= m_mounts.size())
@@ -188,4 +295,53 @@ sinsp_container_info::container_health_probe::probe_type sinsp_container_info::m
 	}
 
 	return match->m_probe_type;
+}
+
+sinsp_container_info::sinsp_container_info(sinsp_container_lookup &&lookup):
+	m_type(CT_UNKNOWN),
+	m_container_ip(0),
+	m_privileged(false),
+	m_memory_limit(0),
+	m_swap_limit(0),
+	m_cpu_shares(1024),
+	m_cpu_quota(0),
+	m_cpu_period(100000),
+	m_cpuset_cpu_count(0),
+	m_is_pod_sandbox(false),
+	m_lookup(std::move(lookup)),
+	m_container_user("<NA>"),
+	m_metadata_deadline(0),
+	m_size_rw_bytes(-1)
+{
+}
+
+void sinsp_container_info::clear()
+{
+	this->~sinsp_container_info();
+	new(this) sinsp_container_info();
+}
+
+const std::vector<std::string>& sinsp_container_info::get_env() const
+{
+	return m_env;
+}
+
+bool sinsp_container_info::is_pod_sandbox() const
+{
+	return m_is_pod_sandbox;
+}
+
+bool sinsp_container_info::is_successful() const
+{
+	return m_lookup.is_successful();
+}
+
+void sinsp_container_info::set_lookup_status(sinsp_container_lookup::state s)
+{
+	m_lookup.set_status(s);
+}
+
+sinsp_container_lookup::state sinsp_container_info::get_lookup_status() const
+{
+	return m_lookup.get_status();
 }

@@ -26,7 +26,6 @@ limitations under the License.
 #include <unordered_map>
 #include <vector>
 #include <memory>
-#include <functional>
 
 #ifdef _WIN32
 #define CANCELED_FD_NUMBER INT64_MAX
@@ -123,10 +122,7 @@ public:
 
 	libsinsp::state::static_struct::field_infos static_fields() const override;
 
-	virtual std::unique_ptr<sinsp_fdinfo> clone() const
-	{
-		return std::make_unique<sinsp_fdinfo>(*this);
-	}
+	virtual std::unique_ptr<sinsp_fdinfo> clone() const;
 
 	/*!
 	  \brief Return a single ASCII character that identifies the FD type.
@@ -529,45 +525,19 @@ public:
 
 	// ---- libsinsp::state::table implementation ----
 
-	size_t entries_count() const override
-	{
-		return size();
-	}
+	size_t entries_count() const override;
 
-	void clear_entries() override
-	{
-		clear();
-	}
+	void clear_entries() override;
 
 	std::unique_ptr<libsinsp::state::table_entry> new_entry() const override;
 
-	bool foreach_entry(std::function<bool(libsinsp::state::table_entry& e)> pred) override
-	{
-		return loop([&pred](int64_t i, sinsp_fdinfo& e){ return pred(e); });
-	}
+	bool foreach_entry(std::function<bool(libsinsp::state::table_entry& e)> pred) override;
 
 	std::shared_ptr<libsinsp::state::table_entry> get_entry(const int64_t& key) override;
 
-	std::shared_ptr<libsinsp::state::table_entry> add_entry(const int64_t& key, std::unique_ptr<libsinsp::state::table_entry> entry) override
-	{
-		if (!entry)
-		{
-			throw sinsp_exception("null entry added to fd table");
-		}
-		auto fdinfo = dynamic_cast<sinsp_fdinfo*>(entry.get());
-		if (!fdinfo)
-		{
-			throw sinsp_exception("unknown entry type added to fd table");
-		}
-		entry.release();
+	std::shared_ptr<libsinsp::state::table_entry> add_entry(const int64_t& key, std::unique_ptr<libsinsp::state::table_entry> entry) override;
 
-		return add_ref(key, std::unique_ptr<sinsp_fdinfo>(fdinfo));
-	}
-
-	bool erase_entry(const int64_t& key) override
-	{
-		return erase(key);
-	}
+	bool erase_entry(const int64_t& key) override;
 
 private:
 	sinsp* m_inspector;

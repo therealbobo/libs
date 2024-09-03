@@ -18,7 +18,6 @@ limitations under the License.
 
 #ifndef _WIN32
 #include <inttypes.h>
-#include <algorithm>
 #endif
 #include <libsinsp/sinsp.h>
 #include <libsinsp/sinsp_int.h>
@@ -180,6 +179,12 @@ libsinsp::state::static_struct::field_infos sinsp_fdinfo::static_fields() const
 
 	return ret;
 }
+
+std::unique_ptr<sinsp_fdinfo> sinsp_fdinfo::clone() const
+{
+	return std::make_unique<sinsp_fdinfo>(*this);
+}
+
 
 std::string sinsp_fdinfo::tostring_clean() const
 {
@@ -510,12 +515,49 @@ sinsp_fdinfo* sinsp_fdtable::add(int64_t fd, std::unique_ptr<sinsp_fdinfo> fdinf
 	return add_ref(fd, std::move(fdinfo)).get();
 }
 
+size_t sinsp_fdtable::entries_count() const
+{
+	return size();
+}
+
+void sinsp_fdtable::clear_entries()
+{
+	clear();
+}
+
 std::unique_ptr<libsinsp::state::table_entry> sinsp_fdtable::new_entry() const
 {
 	return m_inspector->build_fdinfo();
 };
 
+bool sinsp_fdtable::foreach_entry(std::function<bool(libsinsp::state::table_entry& e)> pred)
+{
+	return loop([&pred](int64_t i, sinsp_fdinfo& e){ return pred(e); });
+}
+
+
 std::shared_ptr<libsinsp::state::table_entry> sinsp_fdtable::get_entry(const int64_t& key)
 {
 	return find_ref(key);
+}
+
+std::shared_ptr<libsinsp::state::table_entry> sinsp_fdtable::add_entry(const int64_t& key, std::unique_ptr<libsinsp::state::table_entry> entry)
+{
+	if (!entry)
+	{
+		throw sinsp_exception("null entry added to fd table");
+	}
+	auto fdinfo = dynamic_cast<sinsp_fdinfo*>(entry.get());
+	if (!fdinfo)
+	{
+		throw sinsp_exception("unknown entry type added to fd table");
+	}
+	entry.release();
+
+	return add_ref(key, std::unique_ptr<sinsp_fdinfo>(fdinfo));
+}
+
+bool sinsp_fdtable::erase_entry(const int64_t& key)
+{
+	return erase(key);
 }

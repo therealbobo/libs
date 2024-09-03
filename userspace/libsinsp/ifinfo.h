@@ -94,9 +94,3 @@ private:
 	std::vector<sinsp_ipv4_ifinfo> m_ipv4_interfaces;
 	std::vector<sinsp_ipv6_ifinfo> m_ipv6_interfaces;
 };
-
-void sinsp_network_interfaces::clear()
-{
-	m_ipv4_interfaces.clear();
-	m_ipv6_interfaces.clear();
-}

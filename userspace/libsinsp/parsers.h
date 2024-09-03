@@ -22,8 +22,10 @@ limitations under the License.
 #pragma once
 #include <libsinsp/sinsp.h>
 #include <libsinsp/sinsp_syslog.h>
-#include <libsinsp/fdinfo.h>
 #include <memory>
+
+class sinsp_evt;
+struct erase_fd_params;
 
 class sinsp_parser
 {

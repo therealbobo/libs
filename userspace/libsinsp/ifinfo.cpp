@@ -446,3 +446,9 @@ std::vector<sinsp_ipv6_ifinfo>* sinsp_network_interfaces::get_ipv6_list()
 {
 	return &m_ipv6_interfaces;
 }
+
+void sinsp_network_interfaces::clear()
+{
+	m_ipv4_interfaces.clear();
+	m_ipv6_interfaces.clear();
+}

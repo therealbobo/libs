@@ -67,6 +67,11 @@ libsinsp::procfs_utils::ns_helper::ns_helper(const std::string& host_root):
 	}
 }
 
+bool libsinsp::procfs_utils::ns_helper::can_read_host_init_ns_mnt() const
+{
+	return !m_cannot_read_host_init_ns_mnt;
+}
+
 bool libsinsp::procfs_utils::ns_helper::in_own_ns_mnt(int64_t pid) const
 {
 	if(m_cannot_read_host_init_ns_mnt)
@@ -89,4 +94,9 @@ bool libsinsp::procfs_utils::ns_helper::in_own_ns_mnt(int64_t pid) const
 	}
 
 	return true;
+}
+
+std::string libsinsp::procfs_utils::ns_helper::get_pid_root(int64_t pid) const
+{
+	return m_host_root + "/proc/" + std::to_string(pid) + "/root";
 }

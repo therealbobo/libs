@@ -42,6 +42,5 @@ limitations under the License.
 #include <list>
 #include <memory>
 #include <queue>
-#include <sstream>
 #include <string>
 #include <vector>

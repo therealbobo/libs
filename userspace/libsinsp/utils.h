@@ -29,9 +29,7 @@ limitations under the License.
 #include <cstddef>
 #include <cstring>
 #include <list>
-#include <locale>
 #include <set>
-#include <sstream>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -270,21 +268,7 @@ const char* print_format_to_string(ppm_print_format fmt);
 std::vector<std::string> sinsp_split(std::string_view sv, char delim);
 
 template<typename It>
-std::string sinsp_join(It begin, It end, char delim)
-{
-	if(begin == end)
-	{
-		return "";
-	}
-	std::stringstream ss;
-	ss << *begin;
-	++begin;
-	for(auto it = begin; it != end; ++it)
-	{
-		ss << delim << *it;
-	}
-	return ss.str();
-}
+std::string sinsp_join(It begin, It end, char delim);
 
 std::string& ltrim(std::string& s);
 std::string& rtrim(std::string& s);

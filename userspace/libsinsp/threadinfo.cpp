@@ -22,8 +22,9 @@ limitations under the License.
 #include <limits.h>
 #endif
 #include <stdio.h>
-#include <algorithm>
 #include <libscap/strl.h>
+#include <libsinsp/filter.h>
+#include <libsinsp/sinsp_filtercheck.h>
 #include <libsinsp/sinsp.h>
 #include <libsinsp/sinsp_int.h>
 #include <libscap/scap-int.h>

@@ -16,12 +16,13 @@ limitations under the License.
 
 */
 
+#include <thread>
+
 #include <gtest/gtest.h>
 #include <libsinsp/plugin.h>
 #include <libsinsp/test/helpers/threads_helpers.h>
 
 #include <sinsp_with_test_input.h>
-#include "test_utils.h"
 #include "plugins/test_plugins.h"
 
 static std::shared_ptr<sinsp_plugin> register_plugin_api(

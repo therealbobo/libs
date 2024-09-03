@@ -88,6 +88,21 @@ void sinsp_filter_check::set_inspector(sinsp* inspector)
 	m_inspector = inspector;
 }
 
+std::unique_ptr<sinsp_filter_check> sinsp_filter_check::allocate_new()
+{
+	throw sinsp_exception("can't clone abstract sinsp_filter_check");
+}
+
+const filter_check_info* sinsp_filter_check::get_fields() const
+{
+	return m_info;
+}
+
+const filtercheck_field_info* sinsp_filter_check::get_field_info() const
+{
+	return m_field;
+}
+
 template <class T>
 static inline T rawval_cast(uint8_t *rawval)
 {
@@ -756,6 +771,16 @@ void sinsp_filter_check::add_filter_value(const char* str, uint32_t len, uint32_
 	}
 }
 
+const std::vector<filter_value_t>& sinsp_filter_check::get_filter_values() const
+{
+	return m_vals;
+}
+
+bool sinsp_filter_check::has_filtercheck_value() const
+{
+	return m_rhs_filter_check.get() != nullptr;
+}
+
 void sinsp_filter_check::add_filter_value(std::unique_ptr<sinsp_filter_check> rhs_chk)
 {
 	if(!get_filter_values().empty())
@@ -1234,6 +1259,11 @@ bool sinsp_filter_check::compare_nocache(sinsp_evt* evt)
 	return compare_rhs(m_cmpop, lhs_type, m_extracted_values);
 }
 
+Json::Value sinsp_filter_check::extract_as_js(sinsp_evt*, uint32_t* len)
+{
+	return Json::nullValue;
+}
+
 void sinsp_filter_check::add_transformer(filter_transformer_type trtype)
 {
 	auto original_type = get_field_info();
@@ -1274,6 +1304,20 @@ void sinsp_filter_check::add_transformer(filter_transformer_type trtype)
 	m_transformers.push_back(std::move(tr));
 
 	check_rhs_field_type_consistency();
+}
+
+bool sinsp_filter_check::has_transformers() const
+{
+	return !m_transformers.empty();
+}
+
+const filtercheck_field_info* sinsp_filter_check::get_transformed_field_info() const
+{
+	if (m_transformed_field != nullptr)
+	{
+		return m_transformed_field.get();
+	}
+	return get_field_info();
 }
 
 bool sinsp_filter_check::apply_transformers(std::vector<extract_value_t>& values)
