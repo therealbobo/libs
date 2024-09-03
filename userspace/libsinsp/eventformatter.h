@@ -21,7 +21,7 @@ limitations under the License.
 #include <utility>
 #include <string>
 #include <memory>
-#include <json/json.h>
+#include <json/forwards.h>
 
 #include <libsinsp/filter_check_list.h>
 #include <libsinsp/filter.h>

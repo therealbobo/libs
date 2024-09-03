@@ -23,7 +23,7 @@ limitations under the License.
 #include <string_view>
 #include <memory>
 
-#include <json/json.h>
+#include <json/forwards.h>
 
 #include <libsinsp/sinsp_inet.h>
 #include <libsinsp/sinsp_public.h>

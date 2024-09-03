@@ -22,7 +22,7 @@ limitations under the License.
 #include <libsinsp/sinsp_public.h>
 #include <libsinsp/tuples.h>
 
-#include <json/json.h>
+#include <json/forwards.h>
 
 #include <algorithm>
 #include <cctype>
