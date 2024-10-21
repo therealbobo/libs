@@ -348,26 +348,6 @@ void sinsp::open_common(scap_open_args* oargs,
 
 	init();
 
-	// enable generation of async meta-events for all loaded plugins supporting
-	// that capability. Meta-events are considered only during live captures,
-	// because offline captures will have the async events already encoded
-	// in the event stream.
-	if(!is_capture()) {
-		// note(jasondellaluce,rohith-raju): for now the emscripten build does not support
-		// tbb queues, so async event production is disabled
-		for(auto& p : m_plugin_manager->plugins()) {
-			if(p->caps() & CAP_ASYNC) {
-				auto res = p->set_async_event_handler([this](auto& p, auto e) {
-					this->handle_plugin_async_event(p, std::move(e));
-				});
-				if(!res) {
-					throw sinsp_exception("can't set async event handler for plugin '" + p->name() +
-					                      "' : " + p->get_last_error());
-				}
-			}
-		}
-	}
-
 	// notify registered plugins of capture open
 	for(auto& p : m_plugin_manager->plugins()) {
 		if(p->caps() & CAP_CAPTURE_LISTENING) {
@@ -716,26 +696,6 @@ void sinsp::close() {
 	deinit_state();
 
 	m_filter.reset();
-
-	// unset the meta-event callback to all plugins that support it
-	if(!is_capture() && m_mode != SINSP_MODE_NONE) {
-		std::string err;
-		for(auto& p : m_plugin_manager->plugins()) {
-			if(p->caps() & CAP_ASYNC) {
-				// collect errors but let's make sure we reset all the handlers
-				// event in case of one failure.
-				auto res = p->set_async_event_handler(nullptr);
-				if(!res) {
-					err += err.empty() ? "" : ", ";
-					err += "can't reset async event handler for plugin '" + p->name() +
-					       "' : " + p->get_last_error();
-				}
-			}
-		}
-		if(!err.empty()) {
-			throw sinsp_exception(err);
-		}
-	}
 
 	// notify registered plugins of capture close
 	if(m_mode != SINSP_MODE_NONE) {
@@ -1448,6 +1408,26 @@ void sinsp::stop_capture() {
 		throw sinsp_exception(scap_getlasterr(m_h));
 	}
 
+	// unset the meta-event callback to all plugins that support it
+	if(!is_capture() && m_mode != SINSP_MODE_NONE) {
+		std::string err;
+		for(auto& p : m_plugin_manager->plugins()) {
+			if(p->caps() & CAP_ASYNC) {
+				// collect errors but let's make sure we reset all the handlers
+				// event in case of one failure.
+				auto res = p->set_async_event_handler(nullptr);
+				if(!res) {
+					err += err.empty() ? "" : ", ";
+					err += "can't reset async event handler for plugin '" + p->name() +
+					       "' : " + p->get_last_error();
+				}
+			}
+		}
+		if(!err.empty()) {
+			throw sinsp_exception(err);
+		}
+	}
+
 	/* Print scap stats */
 	if(m_auto_stats_print) {
 		print_capture_stats(sinsp_logger::SEV_DEBUG);
@@ -1478,6 +1458,26 @@ void sinsp::stop_capture() {
 void sinsp::start_capture() {
 	if(scap_start_capture(m_h) != SCAP_SUCCESS) {
 		throw sinsp_exception(scap_getlasterr(m_h));
+	}
+
+	// enable generation of async meta-events for all loaded plugins supporting
+	// that capability. Meta-events are considered only during live captures,
+	// because offline captures will have the async events already encoded
+	// in the event stream.
+	if(!is_capture()) {
+		// note(jasondellaluce,rohith-raju): for now the emscripten build does not support
+		// tbb queues, so async event production is disabled
+		for(auto& p : m_plugin_manager->plugins()) {
+			if(p->caps() & CAP_ASYNC) {
+				auto res = p->set_async_event_handler([this](auto& p, auto e) {
+					this->handle_plugin_async_event(p, std::move(e));
+				});
+				if(!res) {
+					throw sinsp_exception("can't set async event handler for plugin '" + p->name() +
+					                      "' : " + p->get_last_error());
+				}
+			}
+		}
 	}
 }
 
