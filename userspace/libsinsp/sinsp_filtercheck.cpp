@@ -16,6 +16,7 @@ limitations under the License.
 
 */
 
+#include "sinsp_filter_transformer.h"
 #include <libsinsp/sinsp.h>
 #include <libsinsp/sinsp_int.h>
 #include <libsinsp/utils.h>
@@ -1044,8 +1045,8 @@ void sinsp_filter_check::add_transformer(filter_transformer_type trtype) {
 
 	// apply type transformation, both as a feasibility check and
 	// as an information to be returned later on
-	sinsp_filter_transformer tr(trtype);
-	if(!tr.transform_type(m_transformed_field->m_type)) {
+	auto tr = transformer_factory_create_transformer(trtype);
+	if(!tr->transform_type(m_transformed_field->m_type)) {
 		throw sinsp_exception("can't add field transformer: type '" +
 		                      std::string(param_type_to_string(m_transformed_field->m_type)) +
 		                      "' is not supported by '" + filter_transformer_type_str(trtype) +
@@ -1064,7 +1065,7 @@ void sinsp_filter_check::add_transformer(filter_transformer_type trtype) {
 bool sinsp_filter_check::apply_transformers(std::vector<extract_value_t>& values) {
 	auto type = get_field_info()->m_type;
 	for(auto& tr : m_transformers) {
-		if(!tr.transform_values(values, type)) {
+		if(!tr->transform_values(values, type)) {
 			return false;
 		}
 	}
