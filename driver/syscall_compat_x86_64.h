@@ -983,6 +983,9 @@ or GPL2.txt for full copies of the license.
 #ifndef __NR_rseq
 #define __NR_rseq 334
 #endif
+#ifndef __NR_uretprobe
+#define __NR_uretprobe 335
+#endif
 #ifndef __NR_pidfd_send_signal
 #define __NR_pidfd_send_signal 424
 #endif
@@ -1096,4 +1099,7 @@ or GPL2.txt for full copies of the license.
 #endif
 #ifndef __NR_lsm_list_modules
 #define __NR_lsm_list_modules 461
+#endif
+#ifndef __NR_mseal
+#define __NR_mseal 462
 #endif

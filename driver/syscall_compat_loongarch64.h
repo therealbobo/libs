@@ -245,6 +245,12 @@ or GPL2.txt for full copies of the license.
 #ifndef __NR_readlinkat
 #define __NR_readlinkat 78
 #endif
+#ifndef __NR_newfstatat
+#define __NR_newfstatat 79
+#endif
+#ifndef __NR_fstat
+#define __NR_fstat 80
+#endif
 #ifndef __NR_sync
 #define __NR_sync 81
 #endif
@@ -943,4 +949,7 @@ or GPL2.txt for full copies of the license.
 #endif
 #ifndef __NR_lsm_list_modules
 #define __NR_lsm_list_modules 461
+#endif
+#ifndef __NR_mseal
+#define __NR_mseal 462
 #endif
