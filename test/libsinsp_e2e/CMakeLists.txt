@@ -39,6 +39,9 @@ add_executable(
 	main.cpp
 	paths.cpp
 	process.cpp
+	security_file_events.cpp
+	security_network_events.cpp
+	security_process_events.cpp
 	subprocess.cpp
 	suppress_events.cpp
 	sys_call_test.cpp
